@@ -1,4 +1,5 @@
-body {
+body, html {
+  height: 100%;
   margin: 0;
   padding: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
@@ -6,9 +7,79 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow: hidden
+}
+
+@font-face {
+  font-family: 'DBH';
+  font-style: normal;
+  font-weight: normal;
+  src:
+    local('DBH Normal'),
+    local('DBH-Normal'),
+    url(./fonts/DB-Helvethaica-X-Cond.ttf) format('TrueType');
+}
+
+@font-face {
+  font-family: 'DBH';
+  font-style: normal;
+  font-weight: bold;
+  src:
+    local('DBH Bold'),
+    local('DBH-Bold'),
+    url(./fonts/DB-Helvethaica-X-Bd-Cond.ttf) format('TrueType');
+}
+
+@font-face {
+  font-family: 'DBH';
+  font-style: normal;
+  font-weight: bolder;
+  src:
+    local('DBH Bolder'),
+    local('DBH-Bolder'),
+    url(./fonts/DB-Helvethaica-X-Blk-Cond.ttf) format('TrueType');
+}
+
+@font-face {
+  font-family: 'DBH';
+  font-style: normal;
+  font-weight: 500;
+  src:
+    local('DBH Med'),
+    local('DBH-Med'),
+    url(./fonts/DB-Helvethaica-X-Med-Cond.ttf) format('TrueType');
+}
+
+@font-face {
+  font-family: 'DBH';
+  font-style: normal;
+  font-weight: 300;
+  src:
+    local('DBH Thin'),
+    local('DBH-Thin'),
+    url(./fonts/DB-Helvethaica-X-Thin-Cond.ttf) format('TrueType');
+}
+
+@font-face {
+  font-family: 'DBH';
+  font-style: normal;
+  font-weight: 200;
+  src:
+    local('DBH Light'),
+    local('DBH-Light'),
+    url(./fonts/DB-Helvethaica-X-Li-Cond.ttf) format('TrueType');
+}
+
+@font-face {
+  font-family: 'DBH';
+  font-style: normal;
+  font-weight: 100;
+  src:
+    local('DBH UltraLight'),
+    local('DBH-UltraLight'),
+    url(./fonts/DB-Helvethaica-X-UlLi-Cond.ttf) format('TrueType');
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
-    monospace;
+  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",monospace;
 }

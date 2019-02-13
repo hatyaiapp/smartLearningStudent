@@ -1,5 +1,27 @@
 .App {
   text-align: center;
+  background-image: url('./image/bg1.png');
+
+  /* Full height */
+  height: 500; 
+
+  /* Center and scale the image nicely */
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.login {
+  text-align: center;
+  background-image: url('./image/bg2.png');
+
+  /* Full height */
+  height: 500; 
+
+  /* Center and scale the image nicely */
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
 }
 
 .App-logo {
@@ -21,6 +43,61 @@
 
 .App-link {
   color: #61dafb;
+}
+
+.loginBox {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: 'center';
+}
+
+.login-header {
+  font-family: 'DBH';
+  /* font-weight: bold; */
+  color:#f0592b;
+  font-size: 50px;
+}
+
+.input {
+  width: 10%;
+  background-image: linear-gradient(to right, #aaa, #aaa);
+  background-position: 5px calc(100% - 5px);
+  background-size: calc(100% - 10px) 2px;
+  background-repeat: no-repeat;
+  background-color: #fff;
+  border: 0px solid;
+  padding: 10px;
+  font-family: 'DBH';
+  font-weight: 300;
+  font-size: 50px;
+  color: '#fff',
+}
+
+.input2 {
+  font-size: 30px
+}
+
+.label {
+  font-family: 'DBH';
+  font-weight: 500;
+  font-size: 30px;
+  color: #1c5379;
+  align-self: flex-start
+}
+
+.field {
+  width: 100%;
+  height: 56px;
+  border-radius: 4px;
+  position: relative;
+  background-color: rgba(255,255,255,0.3);
+  transition: 0.3s all;
+}
+.field:hover {
+  background-color: rgba(255, 255, 255, 0.45);
+  box-shadow: 0px 4px 20px 0px rgba(0, 0, 0, 0.05);
 }
 
 @keyframes App-logo-spin {
