@@ -3,6 +3,8 @@ import '../App.css';
 import { Button, Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap';
 import { faUser, faClock, faFileAlt, faCalendarAlt, faCaretRight, faCaretLeft, faExclamationCircle } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Player } from 'video-react';
+import ReactAudioPlayer from 'react-audio-player';
 
 class Test extends Component {
     constructor() {
@@ -12,32 +14,21 @@ class Test extends Component {
             data: [],
             current: 0,
             answer: [],
-            timer: 900,
+            timer: 9,
             isTimeOut: false,
             isStart: false,
             modal: false
         }
     }
 
-    doSomethingBeforeUnload() {
-        alert('111')
-    }
-
-    // Setup the `beforeunload` event listener
-    setupBeforeUnloadListener() {
-        window.addEventListener("beforeunload", (ev) => {
-            ev.preventDefault();
-            return this.doSomethingBeforeUnload();
-        });
-    };
-
     componentDidMount() {
         window.addEventListener("beforeunload", (event) => {
             //event.returnValue = "Hellooww"
         })
-        fetch('http://dev.hatyaiapp.com:11948/exam/5c60ffccb0d86070582148d7/questions')
+        fetch('http://dev.hatyaiapp.com:11948/exam/5c6f69b73e90037a7b3ef6dc/questions')
             .then(res => res.json())
             .then(qstn => {
+                console.log(qstn)
                 this.setState({ data: qstn })
             })
     }
@@ -89,7 +80,6 @@ class Test extends Component {
     }
 
     getProgress() {
-        console.log(this.state.data)
         let pickCount = 0
         for (let i in this.state.data) {
             if (this.state.answer[i] != undefined) {
@@ -97,6 +87,37 @@ class Test extends Component {
             }
         }
         return pickCount + '/' + this.state.data.length
+    }
+
+    getMedia(media, isQuestion) {
+        if (media.type == 'image') {
+            return <div style={{ marginBottom: isQuestion ? 20 : 0, marginTop: isQuestion ? 0 : 10 }}>
+                <img src={'http://dev.hatyaiapp.com:11948' + media.path} alt={''} style={{ height: isQuestion ? '30vh' : 'auto', width: isQuestion ? 'auto' : '23vw', borderRadius: 7 }} />
+            </div>
+        }
+        else if (media.type == 'video') {
+            return <div style={{ height: isQuestion ? '30vh' : 'auto', width: isQuestion ? 'auto' : '23vw', marginBottom: isQuestion ? 20 : 0, margin: 'auto', marginTop: isQuestion ? 0 : 10, borderRadius: 7, overflow: 'hidden' }}>
+                <Player
+                    playsInline
+                    poster={'http://dev.hatyaiapp.com:11948' + media.path.replace('mp4', 'png')}
+                    src={'http://dev.hatyaiapp.com:11948' + media.path}
+                />
+            </div>
+        }
+        else if (media.type == 'audio') {
+            return <div style={{ height: isQuestion ? '30vh' : 'auto', width: isQuestion ? 'auto' : '23vw', marginBottom: isQuestion ? 20 : 0, margin: 'auto', marginTop: isQuestion ? 0 : 10 }}>
+                <ReactAudioPlayer
+                    style={{ width: '100%' }}
+                    src={'http://dev.hatyaiapp.com:11948' + media.path}
+                    autoPlay={false}
+                    controls
+                    controlsList="nodownload"
+                />
+            </div>
+        }
+        else {
+            return <p style={{ color: '#000' }}>???????????</p>
+        }
     }
 
     render() {
@@ -190,30 +211,39 @@ class Test extends Component {
                                         <span style={{ fontFamily: 'DBH', fontSize: 32, fontWeight: 500, textAlign: 'left', marginLeft: 10, marginBottom: 20, color: '#1c5379' }}>
                                             {this.state.data[this.state.current] && this.state.data[this.state.current].text}
                                         </span>
-                                        <div style={{ flex: 1, flexWrap: 'wrap', flexDirection: 'row' }}>
+                                        {(this.state.data[this.state.current] && this.state.data[this.state.current].media) &&
+                                            this.getMedia(this.state.data[this.state.current].media, true)
+                                        }
+                                        <div style={{ display: 'flex', /*flex: 1,*/ flexWrap: 'wrap', flexDirection: 'row' }}>
                                             {this.state.data[this.state.current] && this.state.data[this.state.current].choices.map((c, index) => {
                                                 return (
-                                                    <Button
-                                                        onClick={() => {
-                                                            if (this.state.answer[this.state.current] === c.cid) {
-                                                                this.state.answer[this.state.current] = undefined
-                                                                this.forceUpdate()
-                                                            }
-                                                            else {
-                                                                this.state.answer[this.state.current] = c.cid
-                                                                if (this.state.current < this.state.data.length - 1) {
-                                                                    this.setState({ current: this.state.current + 1 })
-                                                                }
-                                                                else {
-                                                                    this.forceUpdate()
-                                                                }
-                                                            }
-                                                        }}
-                                                        disabled={this.state.isTimeOut}
-                                                        style={{ width: '45%', opacity: this.state.isTimeOut ? 0.5 : 1, backgroundColor: this.state.answer[this.state.current] === c.cid ? '#2abaf0' : '#fff', border: '2px solid #2abaf0', marginTop: 20, marginLeft: index % 2 === 1 ? '2.5%' : '0%', padding: 0, borderRadius: 30 }}
-                                                    >
-                                                        <span style={{ fontFamily: 'DBH', fontWeight: 500, color: '#1c5379', fontSize: 30 }}>{c.text}</span>
-                                                    </Button>
+                                                    <div style={{ width: '45%', opacity: this.state.isTimeOut ? 0.5 : 1, marginBottom: 20, marginLeft: '2.5%', }}>
+                                                        <div style={{ backgroundColor: '#eee', borderRadius: 30, paddingBottom: 10 }}>
+                                                            <Button
+                                                                onClick={() => {
+                                                                    if (this.state.answer[this.state.current] === c.cid) {
+                                                                        this.state.answer[this.state.current] = undefined
+                                                                        this.forceUpdate()
+                                                                    }
+                                                                    else {
+                                                                        this.state.answer[this.state.current] = c.cid
+                                                                        if (this.state.current < this.state.data.length - 1) {
+                                                                            this.setState({ current: this.state.current + 1 })
+                                                                        }
+                                                                        else {
+                                                                            this.forceUpdate()
+                                                                        }
+                                                                    }
+                                                                }}
+                                                                disabled={this.state.isTimeOut}
+                                                                style={{ width: '97%', backgroundColor: this.state.answer[this.state.current] === c.cid ? '#2abaf0' : '#fff', border: '2px solid #2abaf0', padding: 0, borderRadius: 30, marginTop: 10 }}
+                                                            >
+                                                                <span style={{ fontFamily: 'DBH', fontWeight: 500, color: '#1c5379', fontSize: 30 }}>{c.text}</span>
+                                                            </Button>
+                                                            {c.media && this.getMedia(c.media, false)}
+                                                        </div>
+                                                        <div style={{ display: 'flex', flex: 1 }} />
+                                                    </div>
                                                 )
                                             })}
                                         </div>
