@@ -14,7 +14,7 @@ class Test extends Component {
             data: [],
             current: 0,
             answer: [],
-            timer: 9,
+            timer: 900,
             isTimeOut: false,
             isStart: false,
             modal: false
@@ -227,12 +227,13 @@ class Test extends Component {
                                                                     }
                                                                     else {
                                                                         this.state.answer[this.state.current] = c.cid
-                                                                        if (this.state.current < this.state.data.length - 1) {
-                                                                            this.setState({ current: this.state.current + 1 })
-                                                                        }
-                                                                        else {
-                                                                            this.forceUpdate()
-                                                                        }
+                                                                        this.forceUpdate()
+                                                                        // if (this.state.current < this.state.data.length - 1) {
+                                                                        //     this.setState({ current: this.state.current + 1 })
+                                                                        // }
+                                                                        // else {
+                                                                        //     this.forceUpdate()
+                                                                        // }
                                                                     }
                                                                 }}
                                                                 disabled={this.state.isTimeOut}
