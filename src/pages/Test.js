@@ -16,7 +16,7 @@ class Test extends Component {
             answer: [],
             timer: 900,
             isTimeOut: false,
-            isStart: /*false*/true,
+            isStart: false,
             modal: false
         }
     }
@@ -167,7 +167,9 @@ class Test extends Component {
                                     <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                                         <div style={{ width: 30 }} />
                                         <p style={{ fontFamily: 'DBH', color: '#1c5379', alignSelf: 'center', fontSize: '1.5vw', margin: 0, fontWeight: 500 }}><FontAwesomeIcon icon={faCalendarAlt} style={{ width: 30 }} />แผนผังข้อสอบ</p>
-                                        <FontAwesomeIcon id="toggler" icon={faInfoCircle} style={{ width: 30, color: '#1c5379' }} />
+                                        <a href="">
+                                            <FontAwesomeIcon id="toggler" icon={faInfoCircle} style={{ width: 30, color: '#1c5379' }} />
+                                        </a>
                                     </div>
                                     <div style={{ backgroundColor: '#fff', flex: 1, display: 'flex', flexDirection: 'column' }}>
                                         <span style={{ fontFamily: 'DBH', fontWeight: 500, fontSize: '1.25vw' }}>{this.getProgress()}</span>
@@ -203,15 +205,15 @@ class Test extends Component {
                                     </div>
                                 </div>
                                 <div style={{ alignSelf: 'center', marginBottom: 10, marginLeft: 10, width: '95%' }}>
-                                    {!this.isFinish() && false ?
-                                        <Button disabled onClick={() => null} style={{ width: '100%', background: '#aaa', marginLeft: 2, borderWidth: 0, padding: 0, borderRadius: 30, marginRight: 10 }}>
-                                            <span style={{ fontFamily: 'DBH', fontWeight: 500, color: '#fff', fontSize: '1.75vw' }}>ส่งข้อสอบ</span>
-                                            <FontAwesomeIcon icon={faCaretRight} style={{ width: '1.75vw', fontSize: '1.5vw' }} />
-                                        </Button>
-                                        :
+                                    {!this.isFinish() ?
                                         <Button onClick={() => this.setState({ modal: true })} style={{ width: '100%', background: '#ffe00f', marginLeft: 2, borderWidth: 0, padding: 0, borderRadius: 30, marginRight: 10 }}>
                                             <span style={{ fontFamily: 'DBH', fontWeight: 500, color: '#000', fontSize: '1.75vw' }}>ส่งข้อสอบ</span>
                                             <FontAwesomeIcon icon={faCaretRight} style={{ width: '1.75vw', fontSize: '1.5vw', color: '#000' }} />
+                                        </Button>
+                                        :
+                                        <Button onClick={() => this.setState({ modal: true })} style={{ width: '100%', background: '#6ebb1f', marginLeft: 2, borderWidth: 0, padding: 0, borderRadius: 30, marginRight: 10 }}>
+                                            <span style={{ fontFamily: 'DBH', fontWeight: 500, color: '#fff', fontSize: '1.75vw' }}>ส่งข้อสอบ</span>
+                                            <FontAwesomeIcon icon={faCaretRight} style={{ width: '1.75vw', fontSize: '1.5vw', color: '#fff' }} />
                                         </Button>
                                     }
                                 </div>
