@@ -11,6 +11,19 @@ import SideNav, { Toggle, Nav, NavItem, NavIcon, NavText } from '@trendmicro/rea
 // Be sure to include styles at some point, probably during your bootstraping
 import '@trendmicro/react-sidenav/dist/react-sidenav.css';
 
+var subjectCode = [
+    { code: 'thai', label: 'ภาษาไทย' },
+    { code: 'math', label: 'คณิตศาสตร์' },
+    { code: 'sci', label: 'วิทยาศาสตร์' },
+    { code: 'soc', label: 'สังคมศึกษา' },
+    { code: 'health', label: 'สุขศึกษา' },
+    { code: 'art', label: 'ศึลปะ' },
+    { code: 'tech', label: 'อาชีพ เทคโนโลยี' },
+    { code: 'eng', label: 'ภาษาอังกฤษ' },
+    { code: 'chi', label: 'ภาษาจีน' },
+    { code: 'art', label: 'ภาษาญีปุ่น' },
+]
+
 class Test extends Component {
     constructor() {
         super();
@@ -39,7 +52,7 @@ class Test extends Component {
 
     componentDidMount() {
         let _this = this
-        window.addEventListener("beforeunload", this.onUnload)
+        window.addEventListener("beforeunload", (e) => this.onUnload(e, _this))
         window.history.pushState(null, null, window.location.href);
         window.onpopstate = function (e) {
             if (_this.state.isStart) {
@@ -116,9 +129,11 @@ class Test extends Component {
             })
     }
 
-    onUnload(event) { // the method that will be used for both add and remove event
-        event.preventDefault();
-        event.returnValue = '';
+    onUnload(event, _this) { // the method that will be used for both add and remove event
+        if (_this.state.isStart) {
+            event.preventDefault();
+            event.returnValue = '';
+        }
     }
 
     componentWillUnmount() {
@@ -141,7 +156,7 @@ class Test extends Component {
                         alert('คุณได้ทำข้อสอบชุดนี้แล้ว')
                         this.setState({ isLoading: false })
                     }
-                    else if(e.message === 'Out of range date'){
+                    else if (e.message === 'Out of range date') {
                         alert('หมดเวลาทำข้อสอบแล้ว')
                         this.setState({ isLoading: false })
                     }
@@ -284,7 +299,7 @@ class Test extends Component {
     getRoomListTxt(grade, rooms) {
         let txt = ''
         for (let i in rooms) {
-            txt += (grade + '/' + rooms[i] + ', ')
+            txt += ('ม.' + grade + '/' + rooms[i] + ', ')
         }
         return txt.slice(0, -2)
     }
@@ -338,19 +353,34 @@ class Test extends Component {
                 credentials: 'include',
                 method: 'PUT',
                 body: JSON.stringify({
-                    answer: this.state.answer
+                    answers: this.state.answer
                 })
             })
                 .then(res => res.json())
                 .then(json => {
                     console.log('res', json)
-                    this.setState({ quizModal: false, pickedQuiz: null, pickedQuizData: null, isSendingAnswer: false, modal: false, answer: [], current: 0 })
+                    this.setState({ quizModal: false, pickedQuiz: null, pickedQuizData: null, isSendingAnswer: false, modal: false, answer: [], current: 0, isStart: false })
                 })
                 .catch(err => {
-                    this.setState({ quizModal: false, pickedQuiz: null, pickedQuizData: null, isSendingAnswer: false, modal: false, answer: [], current: 0 })
+                    this.setState({ quizModal: false, pickedQuiz: null, pickedQuizData: null, isSendingAnswer: false, modal: false, answer: [], current: 0, isStart: false })
                     console.log("err", err)
                 })
         })
+    }
+
+    getOutOfTimeTxt(end, start) {
+        if (this.isAvailable(end, start)) {
+            return null
+        }
+        else {
+            let now = Date.now()
+            if (now < Date.parse(start)) {
+                return <span style={{ color: 'red', fontSize: '0.75em' }}> (ยังไม่ถึงเวลาทำข้อสอบ)</span>
+            }
+            else if (now > Date.parse(end)) {
+                return <span style={{ color: 'red', fontSize: '0.75em' }}> (เลยเวลาทำข้อสอบแล้ว)</span>
+            }
+        }
     }
 
     render() {
@@ -413,7 +443,7 @@ class Test extends Component {
                                 ข้อมูลส่วนตัว
                             </NavText>
                         </NavItem>
-                        <div style={{ width: 10, height: '80vh' }} />
+                        <div style={{ width: 10, height: '75vh' }} />
                         <NavItem
                             eventKey="logout"
                             disabled={!this.state.expanded}
@@ -441,18 +471,15 @@ class Test extends Component {
                                             <p style={{ color: '#555', fontFamily: 'DBH', fontSize: '1.6vw', margin: 0 }}><span style={{ color: '#999' }}>ห้อง:</span> {this.getRoomListTxt(item.grade, item.rooms)}</p>
                                         </div>
                                         <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-                                            <p style={{ color: '#555', fontFamily: 'DBH', fontSize: '1.6vw', margin: 0 }}><span style={{ color: '#999' }}>อาจารย์:</span> {item.teacher}</p>
-                                            <p style={{ color: '#555', fontFamily: 'DBH', fontSize: '1.6vw', margin: 0 }}><span style={{ color: '#999' }}>รายวิชา:</span> {item.subjectCode}</p>
-                                        </div>
-                                        <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-                                            <p style={{ color: '#555', fontFamily: 'DBH', fontSize: '1.6vw', margin: 0 }}><span style={{ color: '#999' }}>โรงเรียน:</span> {item.school}</p>
+                                            <p style={{ color: '#555', fontFamily: 'DBH', fontSize: '1.6vw', margin: 0 }}><span style={{ color: '#999' }}>อาจารย์:</span> {item.teacher.name}</p>
+                                            <p style={{ color: '#555', fontFamily: 'DBH', fontSize: '1.6vw', margin: 0 }}><span style={{ color: '#999' }}>รายวิชา:</span> {subjectCode.find(sc => { return item.subjectCode == sc.code }).label}</p>
                                         </div>
                                         <div style={{ marginTop: 30 }}>
                                             {item.quizevents.map((quiz, i) => {
                                                 return (
                                                     <div key={i} style={{ backgroundColor: i % 2 == 0 ? '#eee' : '#fff' }}>
                                                         <div style={styles.quizeventsBox}>
-                                                            <p style={{ color: '#555', fontFamily: 'DBH', fontSize: '1.6vw', margin: 0 }}><span style={{ color: '#999' }}>ระยะเวลา:</span> {this.getDateTxt(quiz.start)} - {this.getDateTxt(quiz.end)}</p>
+                                                            <p style={{ color: '#555', fontFamily: 'DBH', fontSize: '1.6vw', margin: 0,width:'40vw',textAlign:'left' }}><span style={{ color: '#999' }}>ระยะเวลา:</span> {this.getDateTxt(quiz.start)} - {this.getDateTxt(quiz.end)}{this.getOutOfTimeTxt(quiz.start, quiz.end)}</p>
                                                             <p style={{ color: '#555', fontFamily: 'DBH', fontSize: '1.6vw', margin: 0 }}><span style={{ color: '#999' }}>เวลาทำข้อสอบ:</span> {this.getDurationTxt(quiz.duration)}</p>
                                                             <Button onClick={() => this.pickExam(quiz.exam, quiz, item)} disabled={!this.isAvailable(quiz.start, quiz.end)} color={this.isAvailable(quiz.start, quiz.end) ? 'success' : 'secondary'} style={{ height: 40, paddingTop: 0, paddingBottom: 0 }}>
                                                                 <p style={{ color: '#fff', fontFamily: 'DBH', fontSize: '1.2vw', margin: 0 }}>ทำข้อสอบ</p>
@@ -643,7 +670,7 @@ class Test extends Component {
                                     <ModalHeader style={{ paddingBottom: 0 }}><p style={{ color: '#1c5379', fontFamily: 'DBH', fontSize: '1.8vw', fontWeight: 'bolder', }}>ยืนยัน</p></ModalHeader>
                                     <ModalBody>
                                         {this.state.isSendingAnswer ?
-                                            <Spinner type="grow" color="warning" style={{ width: '3rem', height: '3rem',margin:'auto' }} />
+                                            <Spinner type="grow" color="warning" style={{ width: '3rem', height: '3rem', margin: 'auto' }} />
                                             :
                                             this.isFinish() ?
                                                 <p style={{ color: '#1c5379', fontFamily: 'DBH', fontSize: '1.75vw', fontWeight: '500' }}>คุณต้องการส่งคำตอบใช่หรอไม่?</p>

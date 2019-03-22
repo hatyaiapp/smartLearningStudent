@@ -73,7 +73,7 @@ class Login extends Component {
 
     render() {
         if (this.state.redirect) {
-            return <Redirect แ to="/Test" />;
+            return <Redirect to="/test" />;
         }
 
         return (
