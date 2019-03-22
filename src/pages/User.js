@@ -31,89 +31,22 @@ class Test extends Component {
             qstn: [],
             exam: [],
             quizModal: false,
-            goUserPage: false,
-            answersheet: null,
-            isSendingAnswer: false
+            goUserPage: false
         }
     }
 
     componentDidMount() {
-        let _this = this
-        window.addEventListener("beforeunload", this.onUnload)
-        window.history.pushState(null, null, window.location.href);
-        window.onpopstate = function (e) {
-            if (_this.state.isStart) {
-                _this.setState({ quizModal: true })
-                window.history.go(1)
-            }
-            else {
-                window.history.go(0)
-            }
-        };
-        fetch('http://student.questionquick.com/quizevent',
+        fetch('http://student.questionquick.com/profile',
             {
                 credentials: 'include',
             })
             .then(res => res.json())
-            .then(qstn => {
-                console.log('qstn', qstn)
-                if (qstn.message === 'Not Login') {
-                    fetch('http://student.questionquick.com/session/',
-                        {
-                            credentials: 'include',
-                            //headers: { 'Content-Type': 'application/json' },
-                            method: 'DELETE',
-                        })
-                        .then(res => res.json())
-                        .then(e => {
-                            if (e.code === '401') {
-                                throw { message: e.message }
-                            }
-                            else {
-                                this.setState({ isLoading: false, redirectHome: true })
-                                console.log(e)
-                            }
-
-                        })
-                        .catch(err => {
-                            this.setState({ isLoading: false }, () => /*alert(err.message)*/null)
-                            console.log('error', err)
-                        })
-                }
-                else {
-                    fetch('http://student.questionquick.com/session/',
-                        {
-                            credentials: 'include',
-                        })
-                        .then(res => res.json())
-                        .then(e => {
-                            if (e.code === '401') {
-                                throw { message: e.message }
-                            }
-                            else {
-                                fetch('http://student.questionquick.com/profile',
-                                    {
-                                        credentials: 'include',
-                                    })
-                                    .then(res => res.json())
-                                    .then(user => {
-                                        this.setState({ isLoading: false, user, qstn }, () => console.log(
-                                            "user", this.state.user, '\n', "qstn", this.state.qstn
-                                        ))
-                                    })
-                            }
-
-                        })
-                        .catch(err => {
-                            this.setState({ isLoading: false }, () => /*alert(err.message)*/null)
-                            console.log('error', err)
-                        })
-                }
+            .then(user => {
+                this.setState({ isLoading: false, user, qstn }, () => console.log(
+                    "user", this.state.user, '\n', "qstn", this.state.qstn
+                ))
             })
-            .catch(e => {
-                console.log("err", e)
-                this.setState({ data: [] })
-            })
+
     }
 
     onUnload(event) { // the method that will be used for both add and remove event
@@ -123,136 +56,6 @@ class Test extends Component {
 
     componentWillUnmount() {
         window.removeEventListener("beforeunload", this.onUnload)
-    }
-
-    start() {
-        console.log(this.state.pickedQuiz, this.state.pickedQuizData)
-        this.setState({ isLoading: true }, () => {
-            fetch('http://student.questionquick.com/quiz/',
-                {
-                    credentials: 'include',
-                    headers: { 'Content-Type': 'application/json' },
-                    method: 'POST',
-                    body: JSON.stringify({ 'qeid': this.state.pickedQuizData.qeid })
-                })
-                .then(res => res.json())
-                .then(e => {
-                    if (e.message === 'Already test') {
-                        alert('คุณได้ทำข้อสอบชุดนี้แล้ว')
-                        this.setState({ isLoading: false })
-                    }
-                    else if(e.message === 'Out of range date'){
-                        alert('หมดเวลาทำข้อสอบแล้ว')
-                        this.setState({ isLoading: false })
-                    }
-                    else {
-                        console.log('e', e)
-                        this.setState({ isStart: true, isLoading: false, answersheet: e }, () => {
-                            this.clockCall = setInterval(() => {
-                                this.decrementClock();
-                            }, 1000);
-                        })
-                    }
-                })
-                .catch(err => {
-                    this.setState({ isLoading: false }, () => /*alert(err.message)*/null)
-                    console.log('error', err)
-                })
-        })
-    }
-
-    decrementClock = () => {
-        // this.setState((prevstate) => ({ timer: prevstate.timer-1 },() => {});
-        this.setState({ timer: this.state.timer - 1 }, () => {
-            if (this.state.timer <= 0) {
-                this.setState({ isTimeOut: true })
-                clearInterval(this.clockCall);
-            }
-        })
-    };
-
-    getTimeTxt(sec) {
-        var sec_num = parseInt(sec, 10); // don't forget the second param
-        // var hours = Math.floor(sec_num / 3600);
-        var minutes = Math.floor(sec_num / 60);
-        var seconds = sec_num - (minutes * 60);
-
-        // if (hours < 10) { hours = "0" + hours; }
-        if (minutes < 10) { minutes = "0" + minutes; }
-        if (seconds < 10) { seconds = "0" + seconds; }
-
-        return /*hours + ':' +*/ minutes + ':' + seconds;
-    }
-
-    isFinish() {
-        for (let i in this.state.exam) {
-            if (this.state.answer[i] === undefined) {
-                return false
-            }
-        }
-        return true
-    }
-
-    getProgress() {
-        let pickCount = 0
-        for (let i in this.state.exam) {
-            if (this.state.answer[i] !== undefined) {
-                pickCount++
-            }
-        }
-        return pickCount + '/' + this.state.exam.length
-    }
-
-    getMedia(media, isQuestion) {
-        if (media.type === 'image') {
-            return <div style={{ marginBottom: isQuestion ? 20 : 0, marginTop: isQuestion ? 0 : 10 }}>
-                <img src={'http://dev.hatyaiapp.com:11948' + media.path} alt={''} style={{ height: isQuestion ? '30vh' : 'auto', width: isQuestion ? 'auto' : '18vw', borderRadius: 7 }} />
-            </div>
-        }
-        else if (media.type === 'video') {
-            return <div style={{ width: isQuestion ? '23vw' : '18vw', marginBottom: isQuestion ? 20 : 0, margin: 'auto', marginTop: isQuestion ? 0 : 10, borderRadius: 7, overflow: 'hidden' }}>
-                <Player
-                    controls
-                    fluid
-                    style={{ width: isQuestion ? '23vw' : '18vw', }}
-                    width={isQuestion ? '23vw' : '18vw'}
-                    height={'30vw'}
-                    poster={'http://dev.hatyaiapp.com:11948' + media.path.replace('mp4', 'png')}
-                    src={'http://dev.hatyaiapp.com:11948' + media.path}
-                />
-            </div>
-        }
-        else if (media.type === 'audio') {
-            return <div style={{ width: isQuestion ? '30vw' : '18vw', marginBottom: isQuestion ? 20 : 0, margin: 'auto', marginTop: isQuestion ? 0 : 10 }}>
-                <ReactAudioPlayer
-                    style={{ width: '100%' }}
-                    src={'http://dev.hatyaiapp.com:11948' + media.path}
-                    autoPlay={false}
-                    controls
-                    controlsList="nodownload"
-                />
-            </div>
-        }
-        else {
-            return <p style={{ color: '#000' }}>???????????</p>
-        }
-    }
-
-    getTimerBG() {
-        //this.state.isTimeOut ? '#ffafaf' : '#b3e0d7'
-
-        if (this.state.isTimeOut) {
-            return '#ffafaf'
-        }
-        else if (this.state.fullTimer * 0.5 < this.state.timer) {
-            return '#b3e0d7'
-        }
-        else if (this.state.fullTimer * 0.25 < this.state.timer) {
-            return '#f0f190'
-        }
-        else {
-            return '#ffc879'
-        }
     }
 
     logout() {
@@ -279,78 +82,6 @@ class Test extends Component {
                     console.log('error', err)
                 })
         }
-    }
-
-    getRoomListTxt(grade, rooms) {
-        let txt = ''
-        for (let i in rooms) {
-            txt += (grade + '/' + rooms[i] + ', ')
-        }
-        return txt.slice(0, -2)
-    }
-
-    getDateTxt(d) {
-        let date = new Date(d)
-        return ('0' + date.getDate()).slice(-2) + '/' + ('0' + (date.getMonth() + 1)).slice(-2) + '/' + date.getFullYear() + ' ' + ('0' + date.getHours()).slice(-2) + ':' + ('0' + date.getMinutes()).slice(-2) + ' น.'
-    }
-
-    getDurationTxt(duration) {
-        var h = Math.floor(duration / 60);
-        var m = duration % 60;
-        let txt = ''
-        if (h !== 0) {
-            txt += h + ' ชั่วโมง ';
-        }
-        if (m !== 0) {
-            txt += m + ' นาที'
-        }
-        return txt
-    }
-
-    isAvailable(start, end) {
-        let now = Date.now()
-        return now > Date.parse(start) && now < Date.parse(end)
-    }
-
-    pickExam(examId, data, item) {
-        this.setState({ isLoading: true }, () => {
-            fetch('http://student.questionquick.com/exam/' + examId + '/questions',
-                {
-                    credentials: 'include',
-                })
-                .then(res => res.json())
-                .then(exam => {
-                    console.log(exam, data, item)
-                    this.setState({ isLoading: false, exam, pickedQuiz: item, pickedQuizData: data, fullTimer: data.duration, timer: data.duration * 60 })
-                })
-                .catch(e => {
-                    console.log(e)
-                    this.setState({ isLoading: false })
-                })
-        })
-    }
-
-    submit() {
-        console.log(this.state.answer, this.state.answersheet)
-        this.setState({ isSendingAnswer: true }, () => {
-            fetch('http://student.questionquick.com/quiz/' + this.state.answersheet._id, {
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                method: 'PUT',
-                body: JSON.stringify({
-                    answer: this.state.answer
-                })
-            })
-                .then(res => res.json())
-                .then(json => {
-                    console.log('res', json)
-                    this.setState({ quizModal: false, pickedQuiz: null, pickedQuizData: null, isSendingAnswer: false, modal: false, answer: [], current: 0 })
-                })
-                .catch(err => {
-                    this.setState({ quizModal: false, pickedQuiz: null, pickedQuizData: null, isSendingAnswer: false, modal: false, answer: [], current: 0 })
-                    console.log("err", err)
-                })
-        })
     }
 
     render() {
@@ -639,28 +370,25 @@ class Test extends Component {
                                         </div>
                                     </div>
                                 </div>
-                                <Modal isOpen={this.state.modal} toggle={() => this.setState({ modal: this.state.isSendingAnswer ? true : !this.state.modal })} className={this.props.className}>
+                                <Modal isOpen={this.state.modal} toggle={() => this.setState({ modal: !this.state.modal })} className={this.props.className}>
                                     <ModalHeader style={{ paddingBottom: 0 }}><p style={{ color: '#1c5379', fontFamily: 'DBH', fontSize: '1.8vw', fontWeight: 'bolder', }}>ยืนยัน</p></ModalHeader>
                                     <ModalBody>
-                                        {this.state.isSendingAnswer ?
-                                            <Spinner type="grow" color="warning" style={{ width: '3rem', height: '3rem',margin:'auto' }} />
+                                        {this.isFinish() ?
+                                            <p style={{ color: '#1c5379', fontFamily: 'DBH', fontSize: '1.75vw', fontWeight: '500' }}>คุณต้องการส่งคำตอบใช่หรอไม่?</p>
                                             :
-                                            this.isFinish() ?
+                                            <div>
                                                 <p style={{ color: '#1c5379', fontFamily: 'DBH', fontSize: '1.75vw', fontWeight: '500' }}>คุณต้องการส่งคำตอบใช่หรอไม่?</p>
-                                                :
-                                                <div>
-                                                    <p style={{ color: '#1c5379', fontFamily: 'DBH', fontSize: '1.75vw', fontWeight: '500' }}>คุณต้องการส่งคำตอบใช่หรอไม่?</p>
-                                                    <p style={{ color: '#1c5379', fontFamily: 'DBH', fontSize: '1.75vw', fontWeight: '500', display: 'flex', flexDirection: 'row', color: 'red', alignItems: 'center' }}>
-                                                        <FontAwesomeIcon icon={faExclamationCircle} style={{ width: '1.75vw', fontSize: '1.5vw', marginRight: 5 }} />ยังเลือกคำตอบไม่ครบทุกข้อ
-                                                    </p>
-                                                </div>
+                                                <p style={{ color: '#1c5379', fontFamily: 'DBH', fontSize: '1.75vw', fontWeight: '500', display: 'flex', flexDirection: 'row', color: 'red', alignItems: 'center' }}>
+                                                    <FontAwesomeIcon icon={faExclamationCircle} style={{ width: '1.75vw', fontSize: '1.5vw', marginRight: 5 }} />ยังเลือกคำตอบไม่ครบทุกข้อ
+                                            </p>
+                                            </div>
                                         }
                                     </ModalBody>
                                     <ModalFooter>
-                                        <Button disabled={this.state.isSendingAnswer} onClick={() => this.submit()} style={{ width: '50%', background: '#00adee', borderWidth: 0, padding: 0, borderRadius: 30, alignSelf: "center", paddingLeft: 15, paddingRight: 15 }}>
+                                        <Button onClick={() => this.submit()} style={{ width: '50%', background: '#00adee', borderWidth: 0, padding: 0, borderRadius: 30, alignSelf: "center", paddingLeft: 15, paddingRight: 15 }}>
                                             <span style={{ fontFamily: 'DBH', fontWeight: 500, color: '#fff', fontSize: '1.5vw' }}>ยืนยันการส่งคำตอบ</span>
                                         </Button>
-                                        <Button disabled={this.state.isSendingAnswer} onClick={() => this.setState({ modal: false })} style={{ width: '50%', background: 'red', borderWidth: 0, padding: 0, borderRadius: 30, alignSelf: "center", paddingLeft: 15, paddingRight: 15 }}>
+                                        <Button onClick={() => this.setState({ modal: false })} style={{ width: '50%', background: 'red', borderWidth: 0, padding: 0, borderRadius: 30, alignSelf: "center", paddingLeft: 15, paddingRight: 15 }}>
                                             <span style={{ fontFamily: 'DBH', fontWeight: 500, color: '#fff', fontSize: '1.5vw' }}>ยกเลิก</span>
                                         </Button>
                                     </ModalFooter>
