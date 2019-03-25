@@ -51,18 +51,20 @@ class Test extends Component {
     }
 
     componentDidMount() {
+        console.log('cdm')
         let _this = this
+        console.log("window.location", window.location)
         window.addEventListener("beforeunload", (e) => this.onUnload(e, _this))
         window.history.pushState(null, null, window.location.href);
-        window.onpopstate = function (e) {
-            if (_this.state.isStart) {
-                _this.setState({ quizModal: true })
-                window.history.go(1)
-            }
-            else {
-                window.history.go(0)
-            }
-        };
+        // window.onpopstate = function (e) {
+        //     if (_this.state.isStart) {
+        //         _this.setState({ quizModal: true })
+        //         window.history.go(1)
+        //     }
+        //     else {
+        //         window.history.go(0)
+        //     }
+        // };
         fetch('http://student.questionquick.com/quizevent',
             {
                 credentials: 'include',
@@ -71,6 +73,7 @@ class Test extends Component {
             .then(qstn => {
                 console.log('qstn', qstn)
                 if (qstn.message === 'Not Login') {
+                    console.log('do if')
                     fetch('http://student.questionquick.com/session/',
                         {
                             credentials: 'include',
@@ -83,7 +86,7 @@ class Test extends Component {
                                 throw { message: e.message }
                             }
                             else {
-                                this.setState({ isLoading: false, redirectHome: true })
+                                this.setState({ isLoading: false/*, redirectHome: true */ })
                                 console.log(e)
                             }
 
@@ -94,6 +97,7 @@ class Test extends Component {
                         })
                 }
                 else {
+                    console.log('do else')
                     fetch('http://student.questionquick.com/session/',
                         {
                             credentials: 'include',
@@ -417,19 +421,21 @@ class Test extends Component {
                     onToggle={(expanded) => {
                         this.setState({ expanded });
                     }}
-                    style={{ background: '#333', color: '#FFF' }}
+                    style={{ background: '#333', color: '#FFF', display: 'flex', flex: 1, flexDirection: 'column' }}
                     onSelect={(selected) => {
                         // Add your code here
                     }}
                 >
                     <SideNav.Toggle />
-                    <SideNav.Nav defaultSelected="home">
-                        <NavItem eventKey="home">
+                    <SideNav.Nav defaultSelected="home" style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+                        <NavItem
+                            eventKey="home"
+                        >
                             <NavIcon>
                                 <i className="fa fa-fw fa-home" style={{ fontSize: '1.75em' }} />
                             </NavIcon>
                             <NavText>
-                                Home
+                                หน้าแรก
                             </NavText>
                         </NavItem>
                         <NavItem
@@ -443,7 +449,7 @@ class Test extends Component {
                                 ข้อมูลส่วนตัว
                             </NavText>
                         </NavItem>
-                        <div style={{ width: 10, height: '75vh' }} />
+                        <div style={{ display: 'flex', flex: 1 }} />
                         <NavItem
                             eventKey="logout"
                             disabled={!this.state.expanded}
@@ -479,7 +485,7 @@ class Test extends Component {
                                                 return (
                                                     <div key={i} style={{ backgroundColor: i % 2 == 0 ? '#eee' : '#fff' }}>
                                                         <div style={styles.quizeventsBox}>
-                                                            <p style={{ color: '#555', fontFamily: 'DBH', fontSize: '1.6vw', margin: 0,width:'40vw',textAlign:'left' }}><span style={{ color: '#999' }}>ระยะเวลา:</span> {this.getDateTxt(quiz.start)} - {this.getDateTxt(quiz.end)}{this.getOutOfTimeTxt(quiz.start, quiz.end)}</p>
+                                                            <p style={{ color: '#555', fontFamily: 'DBH', fontSize: '1.6vw', margin: 0, width: '40vw', textAlign: 'left' }}><span style={{ color: '#999' }}>ระยะเวลา:</span> {this.getDateTxt(quiz.start)} - {this.getDateTxt(quiz.end)}{this.getOutOfTimeTxt(quiz.start, quiz.end)}</p>
                                                             <p style={{ color: '#555', fontFamily: 'DBH', fontSize: '1.6vw', margin: 0 }}><span style={{ color: '#999' }}>เวลาทำข้อสอบ:</span> {this.getDurationTxt(quiz.duration)}</p>
                                                             <Button onClick={() => this.pickExam(quiz.exam, quiz, item)} disabled={!this.isAvailable(quiz.start, quiz.end)} color={this.isAvailable(quiz.start, quiz.end) ? 'success' : 'secondary'} style={{ height: 40, paddingTop: 0, paddingBottom: 0 }}>
                                                                 <p style={{ color: '#fff', fontFamily: 'DBH', fontSize: '1.2vw', margin: 0 }}>ทำข้อสอบ</p>
@@ -539,9 +545,7 @@ class Test extends Component {
                                         <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                                             <div style={{ width: 30 }} />
                                             <p style={{ fontFamily: 'DBH', color: '#1c5379', alignSelf: 'center', fontSize: '1.5vw', margin: 0, fontWeight: 500 }}><FontAwesomeIcon icon={faCalendarAlt} style={{ width: 30 }} />แผนผังข้อสอบ</p>
-                                            <a href="">
-                                                <FontAwesomeIcon id="toggler" icon={faInfoCircle} style={{ width: 30, color: '#1c5379' }} />
-                                            </a>
+                                            <FontAwesomeIcon id="toggler" icon={faInfoCircle} style={{ width: 30, color: '#1c5379' }} />
                                         </div>
                                         <div style={{ backgroundColor: '#fff', flex: 1, display: 'flex', flexDirection: 'column' }}>
                                             <span style={{ fontFamily: 'DBH', fontWeight: 500, fontSize: '1.25vw' }}>{this.getProgress()}</span>
