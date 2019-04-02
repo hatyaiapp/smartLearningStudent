@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import '../App.css';
-import { Button, Modal, ModalHeader, ModalBody, ModalFooter, UncontrolledCollapse, Spinner } from 'reactstrap';
-import { faUser, faClock, faFileAlt, faCalendarAlt, faCaretRight, faCaretLeft, faExclamationCircle, faInfoCircle } from "@fortawesome/free-solid-svg-icons";
+import { Button, Modal, ModalHeader, ModalBody, ModalFooter, UncontrolledCollapse, Spinner, CustomInput, Collapse } from 'reactstrap';
+import { faUser, faClock, faFileAlt, faCalendarAlt, faCaretRight, faCaretLeft, faExclamationCircle, faInfoCircle, faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Player } from 'video-react';
 import ReactAudioPlayer from 'react-audio-player';
@@ -39,7 +39,23 @@ var word = {
         startQuiz: 'ทำข้อสอบ',
         noExam: 'ยังไม่มีข้อสอบในขณะนี้',
         questionAmount: 'จำนวนคำถาม',
-
+        welcome: 'ยินดีต้อนรับ',
+        countdown: 'จับเวลาถอยหลัง',
+        questionDiagram: 'แผนผังข้อสอบ',
+        current: 'ข้อปัจจุบัน',
+        selected: 'ข้อที่ทำแล้ว',
+        notSelected: 'ข้อที่ยังไม่ได้ทำ',
+        submit: 'ส่งข้อสอบ',
+        question: 'ข้อที่',
+        from: 'จาก',
+        back: 'ย้อนกลับ',
+        forward: 'ถัดไป',
+        confirmSubmit: 'คุณต้องการส่งคำตอบใช่หรอไม่',
+        notFinish: 'ยังเลือกคำตอบไม่ครบทุกข้อ',
+        confirm: 'ยืนยันการส่งคำตอบ',
+        cancel: 'ยกเลิก',
+        stopExam: 'หยุดทำข้อสอบ',
+        stopExamWarning: 'คุณต้องการยกเลิกการทำข้อสอบหรือไม่ ข้อมูลข้อสอบชุดนี้จะถูกบันทึกว่า "ไม่ได้ทำการส่งข้อสอบ"',
     },
     en: {
         m: 'M.',
@@ -57,7 +73,23 @@ var word = {
         startQuiz: 'Start the exam',
         noExam: 'No available exam',
         questionAmount: "Question's Amount",
-
+        welcome: 'Welcome',
+        countdown: 'Remaining time',
+        questionDiagram: 'Question Diagram',
+        current: 'Current',
+        selected: 'Selected',
+        notSelected: 'Not Selected',
+        submit: 'Submit',
+        question: 'Question',
+        from: 'From',
+        back: 'Back',
+        forward: 'Forward',
+        confirmSubmit: 'Do you want to submit the answer sheet ?',
+        notFinish: 'You are not complete the exam',
+        confirm: 'Confirm',
+        cancel: 'Cancel',
+        stopExam: 'Stop doing the exam',
+        stopExamWarning: 'Do you want to stop doing the exam? This answer sheet will be saved with "Do not submit the exam"',
     }
 }
 
@@ -91,6 +123,7 @@ class Test extends Component {
             answersheet: null,
             isSendingAnswer: false,
             quitConfirmed: false,
+            focusExam: null
         }
     }
 
@@ -194,6 +227,15 @@ class Test extends Component {
 
     start() {
         console.log(this.state.pickedQuiz, this.state.pickedQuizData)
+
+        // //for test only
+        // this.setState({ isStart: true, isLoading: false, startExamModal: false, /*answersheet: e*/ }, () => {
+        //     this.clockCall = setInterval(() => {
+        //         this.decrementClock();
+        //     }, 1000);
+        // })
+        // //for test only
+
         this.setState({ isLoading: true }, () => {
             fetch('http://student.questionquick.com/quiz/',
                 {
@@ -202,34 +244,38 @@ class Test extends Component {
                     method: 'POST',
                     body: JSON.stringify({ 'qeid': this.state.pickedQuizData.qeid })
                 })
-                .then(res => res.json())
-                .then(e => {
-                    // if (e.message === 'Already test') {
-                    //     alert('คุณได้ทำข้อสอบชุดนี้แล้ว')
-                    //     this.setState({ isLoading: false })
-                    // }
-                    // else if (e.message === 'Out of range date') {
-                    //     alert('หมดเวลาทำข้อสอบแล้ว')
-                    //     this.setState({ isLoading: false })
-                    // }
-                    // else {
-                    //     console.log('e', e)
-                    //     this.setState({ isStart: true, isLoading: false, answersheet: e }, () => {
-                    //         this.clockCall = setInterval(() => {
-                    //             this.decrementClock();
-                    //         }, 1000);
-                    //     })
-                    // }
+                .then(res => Promise.all([res, res.json()]))
+                .then(resp => {
+                    // console.log(resp)
+                    let response = resp[0]
+                    let e = resp[1]
+
+                    if (e.message === 'Already test') {
+                        alert('คุณได้ทำข้อสอบชุดนี้แล้ว')
+                        this.setState({ isLoading: false })
+                    }
+                    else if (e.message === 'Out of range date') {
+                        alert('หมดเวลาทำข้อสอบแล้ว')
+                        this.setState({ isLoading: false })
+                    }
+                    else {
+                        console.log('e', e)
+                        this.setState({ isStart: true, isLoading: false, startExamModal: false, answersheet: e }, () => {
+                            this.clockCall = setInterval(() => {
+                                this.decrementClock();
+                            }, 1000);
+                        })
+                    }
 
                     //test
-                    this.setState({ isStart: true, isLoading: false }, () => {
-                        this.clockCall = setInterval(() => {
-                            this.decrementClock();
-                        }, 1000);
-                    })
+                    // this.setState({ isStart: true, isLoading: false,startExamModal:false, }, () => {
+                    //     this.clockCall = setInterval(() => {
+                    //         this.decrementClock();
+                    //     }, 1000);
+                    // })
                 })
                 .catch(err => {
-                    this.setState({ isLoading: false }, () => /*alert(err.message)*/null)
+                    this.setState({ isLoading: false }, () => alert(err.message))
                     console.log('error', err)
                 })
         })
@@ -320,7 +366,7 @@ class Test extends Component {
     getRoomListTxt(grade, rooms) {
         let txt = ''
         for (let i in rooms) {
-            txt += ('ม.' + grade + '/' + rooms[i] + ', ')
+            txt += (word[window.language].m + grade + '/' + rooms[i] + ', ')
         }
         return txt.slice(0, -2)
     }
@@ -386,16 +432,22 @@ class Test extends Component {
         return now > Date.parse(start) && now < Date.parse(end)
     }
 
-    pickExam(examId, data, item) {
-        this.setState({ isLoading: true }, () => {
-            fetch('http://student.questionquick.com/exam/' + examId + '/questions',
+    pickExam() {
+        let arrIndex1 = this.state.event.slice(0, this.state.event.indexOf('_'))
+        let arrIndex2 = this.state.event.slice(this.state.event.indexOf('_') + 1)
+
+        let item = this.state.qstn[arrIndex1]
+        let data = this.state.qstn[arrIndex1].quizevents[arrIndex2]
+        console.log(item, data, arrIndex1, arrIndex2)
+        this.setState({ isLoading: true, startExamModal: true }, () => {
+            fetch('http://student.questionquick.com/exam/' + data.exam + '/questions',
                 {
                     credentials: 'include',
                 })
                 .then(res => res.json())
                 .then(exam => {
-                    console.log(exam, data, item)
-                    this.setState({ isLoading: false, exam, pickedQuiz: item, pickedQuizData: data, fullTimer: data.duration, timer: data.duration * 60 })
+                    console.log('exam data', exam, data, item)
+                    this.setState({ /*: false, exam,*/ pickedQuiz: item, pickedQuizData: data, fullTimer: data.duration, timer: data.duration * 60 })
                 })
                 .catch(e => {
                     console.log(e)
@@ -430,16 +482,25 @@ class Test extends Component {
 
     getOutOfTimeTxt(end, start) {
         if (this.isAvailable(end, start)) {
-            return null
+            return ''
         }
         else {
             let now = Date.now()
             if (now < Date.parse(start)) {
-                return <span style={styles.outOffTimeTxt}> ({word[window.language].notYetTime})</span>
+                return ' (' + word[window.language].notYetTime + ')'
             }
             else if (now > Date.parse(end)) {
-                return <span style={styles.outOffTimeTxt}> ({word[window.language].overDeadline})</span>
+                return ' (' + word[window.language].overDeadline + ')'
             }
+        }
+    }
+
+    toggleDetail(id) {
+        if (this.state.detailPicked === id) {
+            this.setState({ detailPicked: null })
+        }
+        else {
+            this.setState({ detailPicked: id })
         }
     }
 
@@ -447,38 +508,56 @@ class Test extends Component {
         return (
             <div style={styles.chooseQuizContainer}>
                 <p style={styles.chooseQuizTopic}>{word[window.language].chooseExam}</p>
+                <div style={styles.cutLine} />
                 {this.state.qstn.length > 0 ?
-                    this.state.qstn.map((item, index) => {
-                        return (
-                            <div key={index} style={styles.quizBox}>
-                                <p style={styles.quizTitle}>{item.title}</p>
-                                <div style={styles.quizDesc1}>
-                                    <p style={styles.quizDescTxt}><span style={styles.quizDescTopic}>{word[window.language].classId}:</span> {item.code}</p>
-                                    <p style={styles.quizDescTxt}><span style={styles.quizDescTopic}>{word[window.language].room}:</span> {this.getRoomListTxt(item.grade, item.rooms)}</p>
-                                </div>
-                                <div style={styles.quizDesc2}>
-                                    <p style={styles.quizDescTxt}><span style={styles.quizDescTopic}>{word[window.language].teacher}:</span> {item.teacher.name}</p>
-                                    <p style={styles.quizDescTxt}><span style={styles.quizDescTopic}>{word[window.language].course}:</span> {subjectCode.find(sc => { return item.subjectCode === sc.code })[window.language]}</p>
-                                </div>
-                                <div style={styles.quizDesc3}>
-                                    {item.quizevents.map((quiz, i) => {
-                                        let quizBGColor = { backgroundColor: i % 2 === 0 ? '#eee' : '#fff' }
-                                        return (
-                                            <div key={i} style={quizBGColor}>
-                                                <div style={styles.quizeventsBox}>
-                                                    <p style={styles.quizDescTxt2}><span style={styles.quizDescTopic}>{word[window.language].period}:</span> {this.getDateTxt(quiz.start)} - {this.getDateTxt(quiz.end)}{this.getOutOfTimeTxt(quiz.start, quiz.end)}</p>
-                                                    <p style={styles.quizDescTxt}><span style={styles.quizDescTopic}>{word[window.language].duration}:</span> {this.getDurationTxt(quiz.duration)}</p>
-                                                    <Button onClick={() => this.pickExam(quiz.exam, quiz, item)} disabled={!this.isAvailable(quiz.start, quiz.end)} color={this.isAvailable(quiz.start, quiz.end) ? 'success' : 'secondary'} style={styles.pickQuizBtn}>
-                                                        <p style={styles.startQuizTxt}>{word[window.language].startQuiz}</p>
-                                                    </Button>
-                                                </div>
+                    <div style={{ display: 'flex', flex: 1, flexDirection: 'column' }}>
+                        <div style={styles.chooseQuizDataBox}>
+                            {this.state.qstn.map((item, index) => {
+                                let titleColor = index % 2 == '1' ? '#F0592B' : '#FAAE3C'
+                                return (
+                                    <div key={index} style={styles.quizBox}>
+                                        <div style={{ ...styles.quizTitleContainer, borderColor: titleColor }}>
+                                            <div onClick={() => this.toggleDetail("#detail" + index)} style={{ ...styles.quizTitleBox, backgroundColor: titleColor }}>
+                                                <p style={styles.quizTitle}>{item.title}</p>
+                                                <FontAwesomeIcon icon={this.state.detailPicked === ("#detail" + index) ? faEye : faEyeSlash} style={styles.quizTitleIco} />
                                             </div>
-                                        )
-                                    })}
-                                </div>
-                            </div>
-                        )
-                    })
+                                            <Collapse style={styles.quizDescBox} isOpen={this.state.detailPicked === "#detail" + index}>
+                                                <div style={styles.quizDesc1}>
+                                                    <p style={styles.quizDescTxt}><span style={styles.quizDescTopic}>{word[window.language].classId}:</span> {item.code}</p>
+                                                    <p style={styles.quizDescTxt}><span style={styles.quizDescTopic}>{word[window.language].room}:</span> {this.getRoomListTxt(item.grade, item.rooms)}</p>
+                                                </div>
+                                                <div style={styles.quizDesc2}>
+                                                    <p style={styles.quizDescTxt}><span style={styles.quizDescTopic}>{word[window.language].teacher}:</span> {item.teacher.name}</p>
+                                                    <p style={styles.quizDescTxt}><span style={styles.quizDescTopic}>{word[window.language].course}:</span> {subjectCode.find(sc => { return item.subjectCode === sc.code })[window.language]}</p>
+                                                </div>
+                                            </Collapse>
+                                        </div>
+                                        <div style={styles.quizDesc3}>
+                                            {item.quizevents.map((quiz, i) => {
+                                                return (
+                                                    <Button key={i} style={styles.quizeventsContainer} color={'link'} onClick={() => this.setState({ event: index + '_' + i, focusExam: this.getOutOfTimeTxt(quiz.start, quiz.end) })}>
+                                                        <CustomInput type="radio" id={index + '_' + i} name="customRadio" checked={index + '_' + i === this.state.event} onChange={() => null} />
+                                                        <div style={styles.quizeventsContainerInner}>
+                                                            <p style={styles.quizDescTxt2}>{'[ ข้อสอบชุดที่ X XXXXXXXXXXXXXXXX ]'}</p>
+                                                            <div style={styles.quizeventsBox}>
+                                                                <p style={{ ...styles.quizDescTxt2, color: titleColor }}>{word[window.language].period}: {this.getDateTxt(quiz.start)} - {this.getDateTxt(quiz.end)}</p>
+                                                                <p style={{ ...styles.quizDescTxt, color: titleColor }}>{word[window.language].duration}: {this.getDurationTxt(quiz.duration)}</p>
+                                                                {/* <Button onClick={() => this.pickExam(quiz.exam, quiz, item)} disabled={!this.isAvailable(quiz.start, quiz.end)} color={this.isAvailable(quiz.start, quiz.end) ? 'success' : 'secondary'} style={styles.pickQuizBtn}>
+                                                                        <p style={styles.startQuizTxt}>{word[window.language].startQuiz}</p>
+                                                                    </Button> */}
+                                                            </div>
+                                                        </div>
+                                                    </Button>
+                                                )
+                                            })}
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                        <div style={styles.cutLine} />
+                        {this.getStartQuizBtn()}
+                    </div>
                     :
                     <p style={styles.text}>
                         {word[window.language].noExam}
@@ -516,7 +595,7 @@ class Test extends Component {
             <div style={styles.quizContainer}>
                 <div style={styles.quizBox1}>
                     <div style={styles.quizBox1_1}>
-                        <p style={styles.quizBox1_1Topic}>ยินดีต้อนรับ</p>
+                        <p style={styles.quizBox1_1Topic}>{word[window.language].welcome}</p>
                         <div style={styles.quizBox1_1Box}>
                             <div style={styles.quizBox1_1DetailBox}>
                                 <FontAwesomeIcon icon={faUser} style={styles.quizBox1_1DetailIco} />
@@ -534,14 +613,14 @@ class Test extends Component {
                     </div>
                     <div style={styles.quizBox1_2}>
                         <div style={{ ...styles.quizBox1_2Box, backgroundColor: this.getTimerBG() }}>
-                            <span style={styles.countDownTopic}>จับเวลาถอยหลัง</span>
+                            <span style={styles.countDownTopic}>{word[window.language].countdown}</span>
                             <span style={styles.countDownText}>{this.state.isTimeOut ? 'Times Up!' : this.getTimeTxt(this.state.timer)}</span>
                         </div>
                     </div>
                     <div style={styles.quizBox1_3}>
                         <div style={styles.examTopicBox}>
                             <div style={styles.icoBox} />
-                            <p style={styles.diagramTopicTxt}><FontAwesomeIcon icon={faCalendarAlt} style={styles.icoBox} />แผนผังข้อสอบ</p>
+                            <p style={styles.diagramTopicTxt}><FontAwesomeIcon icon={faCalendarAlt} style={styles.icoBox} />{word[window.language].questionDiagram}</p>
                             <FontAwesomeIcon id="toggler" icon={faInfoCircle} style={styles.diagramTopicIco} />
                         </div>
                         <div style={styles.diagramContainer}>
@@ -562,15 +641,15 @@ class Test extends Component {
                                 <div style={styles.diagramDescContainer}>
                                     <div style={styles.diagramDescBox}>
                                         <div style={styles.diagramDescBtn1} />
-                                        <span style={styles.diagramDescBtnTxt}>ข้อปัจจุบัน</span>
+                                        <span style={styles.diagramDescBtnTxt}>{word[window.language].current}</span>
                                     </div>
                                     <div style={styles.diagramDescBox}>
                                         <div style={styles.diagramDescBtn2} />
-                                        <span style={styles.diagramDescBtnTxt}>ข้อที่ทำแล้ว</span>
+                                        <span style={styles.diagramDescBtnTxt}>{word[window.language].selected}</span>
                                     </div>
                                     <div style={styles.diagramDescBox}>
                                         <div style={styles.diagramDescBtn3} />
-                                        <span style={styles.diagramDescBtnTxt}>ข้อที่ยังไม่ได้ทำ</span>
+                                        <span style={styles.diagramDescBtnTxt}>{word[window.language].notSelected}</span>
                                     </div>
                                 </div>
                             </UncontrolledCollapse>
@@ -579,12 +658,12 @@ class Test extends Component {
                     <div style={styles.quizBox1_4}>
                         {!this.isFinish() ?
                             <Button onClick={() => this.setState({ modal: true })} style={styles.finishBtn1}>
-                                <span style={styles.finishBtnTxt1}>ส่งข้อสอบ</span>
+                                <span style={styles.finishBtnTxt1}>{word[window.language].submit}</span>
                                 <FontAwesomeIcon icon={faCaretRight} style={styles.finishBtnIco1} />
                             </Button>
                             :
                             <Button onClick={() => this.setState({ modal: true })} style={styles.finishBtn2}>
-                                <span style={styles.finishBtnTxt2}>ส่งข้อสอบ</span>
+                                <span style={styles.finishBtnTxt2}>{word[window.language].submit}</span>
                                 <FontAwesomeIcon icon={faCaretRight} style={styles.finishBtnIco2} />
                             </Button>
                         }
@@ -592,27 +671,27 @@ class Test extends Component {
                 </div>
                 <div style={styles.quizBox2}>
                     <div style={styles.examTopicContainer}>
-                        <h1 style={styles.examTopicTxt}>ข้อที่ {this.state.current + 1} จาก {this.state.exam.length}</h1>
+                        <h1 style={styles.examTopicTxt}>{word[window.language].question} {this.state.current + 1} {word[window.language].from} {this.state.exam.length}</h1>
                         <div style={styles.examRouter}>
                             {this.state.current > 0 ?
                                 <Button onClick={() => this.setState({ current: this.state.current - 1 })} style={styles.routerBtn}>
                                     <FontAwesomeIcon icon={faCaretLeft} style={styles.routerBtnIco} />
-                                    <span style={styles.routerBtnTxt}>ย้อนกลับ</span>
+                                    <span style={styles.routerBtnTxt}>{word[window.language].back}</span>
                                 </Button>
                                 :
                                 <Button disabled onClick={() => null} style={styles.routerBtnDisable}>
                                     <FontAwesomeIcon icon={faCaretLeft} style={styles.routerBtnIco} />
-                                    <span style={styles.routerBtnTxt}>ย้อนกลับ</span>
+                                    <span style={styles.routerBtnTxt}>{word[window.language].back}</span>
                                 </Button>
                             }
                             {this.state.current !== (this.state.exam.length - 1) ?
                                 <Button onClick={() => this.setState({ current: this.state.current + 1 })} style={styles.routerBtn}>
-                                    <span style={styles.routerBtnTxt}>ถัดไป</span>
+                                    <span style={styles.routerBtnTxt}>{word[window.language].forward}</span>
                                     <FontAwesomeIcon icon={faCaretRight} style={styles.routerBtnIco} />
                                 </Button>
                                 :
                                 <Button disabled onClick={() => null} style={styles.routerBtnDisable}>
-                                    <span style={styles.routerBtnTxt}>ถัดไป</span>
+                                    <span style={styles.routerBtnTxt}>{word[window.language].forward}</span>
                                     <FontAwesomeIcon icon={faCaretRight} style={styles.routerBtnIco} />
                                 </Button>
                             }
@@ -673,23 +752,23 @@ class Test extends Component {
                             <Spinner type="grow" color="warning" style={styles.sendingAnswerLoading} />
                             :
                             this.isFinish() ?
-                                <p style={styles.sendingAnswerTxt}>คุณต้องการส่งคำตอบใช่หรอไม่?</p>
+                                <p style={styles.sendingAnswerTxt}>{word[window.language].confirmSubmit}</p>
                                 :
                                 <div>
-                                    <p style={styles.sendingAnswerTxt}>คุณต้องการส่งคำตอบใช่หรอไม่?</p>
+                                    <p style={styles.sendingAnswerTxt}>{word[window.language].confirmSubmit}</p>
                                     <p style={styles.sendingAnswerWarning}>
                                         <FontAwesomeIcon icon={faExclamationCircle} style={styles.sendingAnswerWarningIco} />
-                                        ยังเลือกคำตอบไม่ครบทุกข้อ
+                                        {word[window.language].notFinish}
                                     </p>
                                 </div>
                         }
                     </ModalBody>
                     <ModalFooter>
                         <Button disabled={this.state.isSendingAnswer} onClick={() => this.submit()} style={styles.sendAnswerBtnConfirm}>
-                            <span style={styles.sendAnswerBtnTxt}>ยืนยันการส่งคำตอบ</span>
+                            <span style={styles.sendAnswerBtnTxt}>{word[window.language].confirm}</span>
                         </Button>
                         <Button disabled={this.state.isSendingAnswer} onClick={() => this.setState({ modal: false })} style={styles.sendAnswerBtnCancel}>
-                            <span style={styles.sendAnswerBtnTxt}>ยกเลิก</span>
+                            <span style={styles.sendAnswerBtnTxt}>{word[window.language].cancel}</span>
                         </Button>
                     </ModalFooter>
                 </Modal>
@@ -700,16 +779,82 @@ class Test extends Component {
     stopQuizModal() {
         return (
             <Modal isOpen={this.state.quizModal} toggle={() => this.setState({ quizModal: false })}>
-                <ModalHeader toggle={() => this.setState({ quizModal: false }, () => alert('หยุดทำข้อสอบ'))}>หยุดทำข้อสอบ ?</ModalHeader>
+                <ModalHeader toggle={() => this.setState({ quizModal: false }, () => alert(word[window.language].stopExam))}>{word[window.language].stopExam} ?</ModalHeader>
                 <ModalBody>
-                    คุณต้องการยกเลิกการทำข้อสอบหรือไม่ {'\n'}ข้อมูลข้อสอบชุดนี้จะถูกบันทึกว่า "ไม่ได้ทำการส่งข้อสอบ"
-                     </ModalBody>
+                    {word[global.language].stopExamWarning}
+                </ModalBody>
                 <ModalFooter>
-                    <Button color="danger" onClick={() => this.setState({ quizModal: false }, () => window.history.go(0))}>หยุดทำข้อสอบ</Button>{' '}
-                    <Button color="secondary" onClick={() => this.setState({ quizModal: false, isStart: true, quitConfirmed: false })}>ยกเลิก</Button>
+                    <Button color="danger" onClick={() => this.setState({ quizModal: false }, () => window.history.go(0))}>{word[window.language].stopExam}</Button>{' '}
+                    <Button color="secondary" onClick={() => this.setState({ quizModal: false, isStart: true, quitConfirmed: false })}>{word[window.language].cancel}</Button>
                 </ModalFooter>
             </Modal>
         )
+    }
+
+    startExamModal() {
+        if (!this.state.pickedQuiz) {
+            return null
+        }
+        return (
+            <Modal isOpen={this.state.startExamModal} toggle={() => this.setState({ startExamModal: false, isLoading: false })}>
+                <ModalHeader toggle={() => this.setState({ startExamModal: false, isLoading: false })}>
+                    <span style={styles.quizDetailTxt1}>{this.state.pickedQuiz.title}</span>
+                </ModalHeader>
+                <ModalBody>
+                    <p style={styles.quizDetailTxt2}>({this.state.pickedQuiz.code})</p>
+                    <span style={styles.quizDetailTxt3}><span style={styles.quizDetailTopic1}>{word[window.language].teacher}: </span>{this.state.pickedQuiz.teacher.name}</span>
+                    <div style={styles.quizDetailDescBox}>
+                        <span style={styles.quizDetailTxt4}>{word[window.language].questionAmount}: <span style={styles.quizDetailTopic2}>{this.state.exam.length}</span></span>
+                        <span style={styles.quizDetailTxt4}>{word[window.language].duration}: <span style={styles.quizDetailTopic2}>{this.getDurationTxt(this.state.pickedQuizData.duration)}</span></span>
+                    </div>
+                </ModalBody>
+                <ModalFooter>
+                    {/* <Button onClick={() => this.start()} style={styles.startQuizBtn}>
+                        <span style={styles.startQuizBtnTxt}>{word[window.language].startQuiz}</span>
+                        <FontAwesomeIcon icon={faCaretRight} style={styles.startQuizBtnIco} />
+                    </Button>
+
+                    <Button onClick={() => this.setState({ exam: null, pickedQuiz: null, pickedQuizData: null, fullTimer: 0, timer: 0 })} style={styles.backPickQuizBtn}>
+                        <span style={styles.backPickQuizBtnTxt}>{word[window.language].chooseExam}</span>
+                        <FontAwesomeIcon icon={faCaretRight} style={styles.backPickQuizBtnIco} />
+                    </Button> */}
+                    <Button style={styles.startQuizBtn} onClick={() => this.start()}>
+                        <span style={styles.startQuizBtnTxt}>{word[window.language].startQuiz}</span>
+                    </Button>
+                    {' '}
+                    <Button style={styles.backPickQuizBtn} onClick={() => this.setState({ startExamModal: false, isLoading: false })}>
+                        <span style={styles.backPickQuizBtnTxt}>{word[window.language].chooseExam}</span>
+                    </Button>
+                </ModalFooter>
+            </Modal>
+        )
+    }
+
+    getStartQuizBtn() {
+        if (this.state.focusExam === '') {
+            return (
+                <Button onClick={() => this.pickExam()} style={styles.startMainQuizBtn}>
+                    <span style={styles.startMainQuizBtnTxt}>{word[window.language].startQuiz}</span>
+                    <FontAwesomeIcon icon={faCaretRight} style={styles.startMainQuizBtnIco} />
+                </Button>
+            )
+        }
+        else if (!this.state.focusExam) {
+            return (
+                <Button disabled={true} style={styles.startMainQuizBtnDisable}>
+                    <span style={styles.startMainQuizBtnTxt}>{word[window.language].startQuiz}</span>
+                    <FontAwesomeIcon icon={faCaretRight} style={styles.startMainQuizBtnIco} />
+                </Button>
+            )
+        }
+        else {
+            return (
+                <Button disabled={true} style={{ ...styles.startMainQuizBtnDisable }}>
+                    <span style={{ ...styles.startMainQuizBtnTxt }}>{this.state.focusExam}</span>
+                    <FontAwesomeIcon icon={faCaretRight} style={{ ...styles.startMainQuizBtnIco }} />
+                </Button>
+            )
+        }
     }
 
     render() {
@@ -726,19 +871,26 @@ class Test extends Component {
                     </div>
                 }
                 <div className='quizBox'>
-                    {!this.state.pickedQuiz ?
+                    {/* {!this.state.pickedQuiz ?
                         this.chooseQuiz()
                         :
                         !this.state.isStart ?
                             this.quizDetail()
                             :
                             this.quiz()
+                    } */}
+
+                    {!this.state.pickedQuiz || !this.state.isStart ?
+                        this.chooseQuiz()
+                        :
+                        this.quiz()
                     }
                     <img src={require('../image/decorate02.png')} style={styles.decorateLeft} alt={'decorate02'} />
                     <img src={require('../image/decorate01.png')} style={styles.decorateRight} alt={'decorate01'} />
                 </div>
 
                 {this.stopQuizModal()}
+                {this.startExamModal()}
             </div>
         );
     }
@@ -747,19 +899,27 @@ class Test extends Component {
 const styles = {
     loadingContainer: { display: 'flex', flex: 1, backgroundColor: '#000', opacity: '0.5', position: 'absolute', width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center', zIndex: 10 },
     loading: { width: '3rem', height: '3rem' },
-    quizBox: { borderRadius: 10, borderWidth: 5, borderStyle: 'solid', borderColor: '#2abaf0', width: '95%', padding: '5px', marginLeft: 'auto', marginRight: 'auto', marginBottom: '20px', },
+    quizTitleContainer: { borderWidth: 5, borderStyle: 'solid', borderRadius: '20px', overflow: 'hidden' },
+    quizTitleBox: { overflow: 'hidden', justifyContent: 'center', alignItems: 'center', width: '100%', borderWidth: 0, flexDirection: 'row', display: 'flex' },
+    quizBox: { borderRadius: 10, /*borderWidth: 5, borderStyle: 'solid', borderColor: '#2abaf0', */width: '95%', padding: '5px', marginLeft: 'auto', marginRight: 'auto', marginBottom: '20px', },
+    quizeventsContainer: { display: 'flex', flexDirection: 'row', alignItems: 'center', flex: 1, width: '100%', backgroundColor: 'transparent', borderWidth: 0, textDecoration: 'none' },
+    quizeventsContainerInner: { display: 'flex', flexDirection: 'column', flex: 1 },
     quizeventsBox: { display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 5 },
-    outOffTimeTxt: { color: 'red', fontSize: '0.75em' },
+    cutLine: { width: '100%', height: 1, backgroundColor: '#ccc' },
+    outOffTimeTxt: { color: 'red', fontSize: '0.75em', fontFamily: 'DBH' },
     text: { color: '#000', fontFamily: 'DBH', fontSize: '1.5vw' },
 
-    chooseQuizContainer: { zIndex: 2, width: '80vw', height: '80vh', backgroundColor: '#fff', alignSelf: 'center', borderRadius: 20, display: 'flex', flexDirection: 'column', overflowY: 'scroll' },
-    chooseQuizTopic: { color: '#ff5f6d', fontFamily: 'DBH', fontSize: '4vw' },
-    quizTitle: { color: '#555', fontFamily: 'DBH', fontSize: '2vw' },
+    chooseQuizContainer: { zIndex: 2, width: '80vw', height: '80vh', backgroundColor: '#fff', alignSelf: 'center', borderRadius: 20, display: 'flex', flexDirection: 'column' },
+    chooseQuizTopic: { color: '#ff5f6d', fontFamily: 'DBH', fontSize: '4vw', alignSelf: 'flex-start', margin: 0, marginLeft: 30 },
+    chooseQuizDataBox: { display: 'flex', flex: 1, flexDirection: 'column', overflowY: 'scroll' },
+    quizTitle: { color: '#000', fontFamily: 'DBH', fontSize: '2vw', margin: 5 },
+    quizTitleIco: { width: '2vw', fontSize: '1.5vw', color: '#000' },
     quizDesc1: { display: 'flex', flexDirection: 'row', justifyContent: 'space-between', flex: 1 },
     quizDesc2: { display: 'flex', flexDirection: 'row', justifyContent: 'space-between' },
-    quizDesc3: { marginTop: 30 },
+    quizDesc3: { marginTop: 0 },
+    quizDescBox: { paddingLeft: 5, paddingRight: 5 },
     quizDescTxt: { color: '#555', fontFamily: 'DBH', fontSize: '1.6vw', margin: 0 },
-    quizDescTxt2: { color: '#555', fontFamily: 'DBH', fontSize: '1.6vw', margin: 0, width: '40vw', textAlign: 'left' },
+    quizDescTxt2: { color: '#1c527c', fontFamily: 'DBH', fontSize: '1.6vw', margin: 0, width: '40vw', textAlign: 'left' },
     quizDescTopic: { color: '#999' },
     pickQuizBtn: { height: 40, paddingTop: 0, paddingBottom: 0 },
     startQuizTxt: { color: '#fff', fontFamily: 'DBH', fontSize: '1.2vw', margin: 0 },
@@ -772,12 +932,16 @@ const styles = {
     quizDetailDescBox: { marginTop: 20, display: 'flex', flexDirection: 'column' },
     quizDetailTopic1: { color: '#555' },
     quizDetailTopic2: { color: '#337ab7', fontFamily: 'DBH', fontSize: '2vw' },
-    startQuizBtn: { width: '30vw', height: '4vw', background: '#ffe00f', borderWidth: 0, padding: 0, borderRadius: '2vw', margin: 10, alignSelf: "center" },
-    startQuizBtnTxt: { fontFamily: 'DBH', color: '#000', fontWeight: 'bolder', fontSize: '2vw' },
-    startQuizBtnIco: { width: '2vw', fontSize: '1.5vw', color: '#000' },
-    backPickQuizBtn: { width: '30vw', height: '4vw', borderColor: '#ffe00f', borderStyle: 'solid', backgroundColor: '#fff', borderWidth: 2, padding: 0, borderRadius: '2vw', margin: 10, marginTop: 40, alignSelf: "center" },
-    backPickQuizBtnTxt: { fontFamily: 'DBH', color: '#ffe00f', fontWeight: 'bolder', fontSize: '2vw' },
-    backPickQuizBtnIco: { width: '2vw', fontSize: '1.5vw', color: '#ffe00f' },
+    startMainQuizBtn: { width: '30vw', height: '4vw', background: '#f1683e', borderWidth: 0, padding: 0, borderRadius: '2vw', margin: 10, alignSelf: "center" },
+    startMainQuizBtnTxt: { fontFamily: 'DBH', color: '#fff', fontWeight: 'bolder', fontSize: '2vw' },
+    startMainQuizBtnIco: { width: '2vw', fontSize: '1.5vw', color: '#fff' },
+    startMainQuizBtnDisable: { width: '30vw', height: '4vw', background: '#ccc', borderWidth: 0, padding: 0, borderRadius: '2vw', margin: 10, alignSelf: "center" },
+    startQuizBtn: { width: '12vw', height: '3vw', background: '#f1683e', borderWidth: 0, padding: 0, borderRadius: '2vw', alignSelf: "center" },
+    startQuizBtnTxt: { fontFamily: 'DBH', color: '#fff', fontWeight: 'bolder', fontSize: '1.75vw' },
+    startQuizBtnIco: { width: '2vw', fontSize: '1.5vw', color: '#fff' },
+    backPickQuizBtn: { width: '12vw', height: '3vw', borderColor: '#aaa', borderStyle: 'solid', backgroundColor: '#fff', borderWidth: 2, padding: 0, borderRadius: '2vw', alignSelf: "center" },
+    backPickQuizBtnTxt: { fontFamily: 'DBH', color: '#aaa', fontWeight: 'bolder', fontSize: '1.75vw' },
+    backPickQuizBtnIco: { width: '2vw', fontSize: '1.5vw', color: '#aaa' },
 
     quizContainer: { zIndex: 2, width: '85vw', height: '80vh', backgroundColor: '#fff', alignSelf: 'center', borderRadius: 20, display: 'flex', flexDirection: 'row' },
     quizBox1: { display: 'flex', flex: 1, flexDirection: 'column' },
@@ -802,7 +966,7 @@ const styles = {
     diagramBoxInner: { display: 'flex', flexDirection: 'row', flexWrap: 'wrap', alignSelf: 'flex-start' },
     diagramTxt: { fontSize: '1.25vw', fontFamily: 'DBH', fontWeight: 500, color: '#000', marginTop: -5 },
     diagramDescContainer: { backgroundColor: '#fff29e', borderTop: '2px solid #ffeb67' },
-    diagramBox: { display: 'flex', alignItems: 'center' },
+    diagramDescBox: { display: 'flex', alignItems: 'center' },
     diagramDescBtn1: { width: '1.5vw', height: '1.5vw', border: '2px solid #337ab7', backgroundColor: '#fff', marginTop: 2, marginLeft: 2, padding: 0, borderRadius: 3, marginRight: 5 },
     diagramDescBtn2: { width: '1.5vw', height: '1.5vw', backgroundColor: '#44b29c', marginTop: 2, marginLeft: 2, padding: 0, borderRadius: 3, marginRight: 5 },
     diagramDescBtn3: { width: '1.5vw', height: '1.5vw', backgroundColor: '#d9d5d5', marginTop: 2, marginLeft: 2, padding: 0, borderRadius: 3, marginRight: 5 },

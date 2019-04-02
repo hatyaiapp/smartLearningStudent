@@ -7,6 +7,31 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 let showErr;
 
+let word = {
+    th: {
+        signIn: 'ลงชื่อเข้าสู่ระบบ',
+        username: 'ชื่อผู้ใช้งาน',
+        password: 'รหัสผ่าน',
+        enterYourEmail: 'อีเมล',
+        enterYourPassword: 'รหัสผ่าน',
+        login: 'เข้าสู่ระบบ',
+        signUpStudent: 'ลงทะเบียนนักเรียน',
+        err_wrongAuth: 'อีเมล หรือ รหัสผ่าน ไม่ถูกต้อง',
+        err_notActivate: 'ยังไม่ได้ยืนยันการสมัครสมาชิกผ่านอีเมล (กรุณาตรวจสอบอีเมลที่ใช้สมัครสมาชิก)',
+    },
+    en: {
+        signIn: 'Sign In',
+        username: 'Username',
+        password: 'Password',
+        enterYourEmail: 'Enter your e-mail',
+        enterYourPassword: 'Enter your password',
+        login: 'Sign In',
+        signUpStudent: 'Sign Up (Student)',
+        err_wrongAuth: 'Invalid Email or Password',
+        err_notActivate: 'Have not activated account. (Please check E-mail)',
+    }
+}
+
 class CodeError extends Error {
     constructor(message, code) {
         super(message);
@@ -86,9 +111,10 @@ class Login extends Component {
 
     loginFailed(err) {
         let msg = ''
+        console.log(err)
         switch (err) {
-            case 'Invalid password': msg = 'อีเมล หรือ รหัสผ่าน ไม่ถูกต้อง'; break;
-            case 'Account not activated': msg = 'ยังไม่ได้ยืนยันการสมัครสมาชิกผ่านอีเมล'; break;
+            case 'Invalid username or password': msg = word[window.language].err_wrongAuth; break;
+            case 'Account not activated': msg = word[window.language].err_notActivate; break;
             default: msg = err
         }
         clearTimeout(showErr);
@@ -98,6 +124,12 @@ class Login extends Component {
                 _this.setState({ isShowErr: false })
             }, 10000);
         })
+    }
+
+    changeLang(lang) {
+        window.language = lang
+        window.localStorage.setItem('language', lang)
+        this.forceUpdate()
     }
 
     render() {
@@ -120,10 +152,10 @@ class Login extends Component {
                 }
                 <div className='loginBox'>
                     <div style={styles.loginBox}>
-                        <p className='login-header'>ลงชื่อเข้าสู่ระบบ</p>
+                        <p className='login-header'>{word[window.language].signIn}</p>
                         <div style={styles.loginContainer}>
                             <FormGroup style={styles.inputBox}>
-                                <p style={styles.inputLabel} className="label">ชื่อผู้ใช้งาน</p>
+                                <p style={styles.inputLabel} className="label">{word[window.language].username}</p>
                                 <Input
                                     value={this.state.username}
                                     onChange={(e) => this.setState({ username: e.target.value })}
@@ -132,7 +164,7 @@ class Login extends Component {
                                 />
                             </FormGroup>
                             <FormGroup style={{ ...styles.inputBox, marginTop: 20 }}>
-                                <p style={styles.inputLabel} className="label">รหัสผ่าน</p>
+                                <p style={styles.inputLabel} className="label">{word[window.language].password}</p>
                                 <Input
                                     value={this.state.password}
                                     onChange={(e) => this.setState({ password: e.target.value })}
@@ -159,14 +191,19 @@ class Login extends Component {
                             <span style={styles.errorTxt}>{this.state.failedMsg}</span>
                         </Fade>
                         <Button onClick={() => this.Login()} style={styles.loginBtn}>
-                            เข้าสู่ระบบ
+                            {word[window.language].login}
                             <FontAwesomeIcon icon={faCaretRight} style={styles.loginBtnIco} />
                         </Button>
                         <div style={styles.registerContainer}>
-                            <Button style={styles.registerBtn} onClick={() => this.setState({ registerPage: true })} color="link">ลงทะเบียนนักเรียน</Button>
+                            <Button style={styles.registerBtn} onClick={() => this.setState({ registerPage: true })} color="link">{word[window.language].signUpStudent}</Button>
                             {/* <div style={styles.registerLine} />
                             <Button style={styles.registerBtn} color="link">ลงทะเบียนผู้สอน</Button> */}
                         </div>
+                    </div>
+                    <div style={styles.langBox}>
+                        <Button onClick={() => this.changeLang('th')} color="link"><p style={{ ...styles.langBtn, color: window.language === 'th' ? '#e71c63' : '#aaa' }}>ไทย</p></Button>
+                        <p style={styles.langBtn}>/</p>
+                        <Button onClick={() => this.changeLang('en')} color="link"><p style={{ ...styles.langBtn, color: window.language === 'en' ? '#e71c63' : '#aaa' }}>EN</p></Button>
                     </div>
                 </div>
             </div>
@@ -193,6 +230,8 @@ let styles = {
     registerLine: { height: '2vw', width: 1, backgroundColor: '#44b27c' },
     errorTxt: { textAlign: 'left', color: 'red', fontFamily: 'DBH', fontSize: '2rem' },
     errAlert: { width: '60vw', marginTop: '10px', margin: 'auto' },
+    langBox: { color: '#aaa', display: 'flex', flexDirection: 'row', top: 0, right: 0, alignItems: 'center', alignSelf: 'flex-start',position:'absolute' },
+    langBtn: { fontFamily: 'DBH', fontSize: '2.5vw' }
 }
 
 export default Login;

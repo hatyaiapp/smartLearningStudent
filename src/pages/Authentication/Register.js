@@ -14,6 +14,47 @@ class CodeError extends Error {
     }
 }
 
+let word = {
+    th: {
+        signUp: 'สมัครสมาชิก',
+        email: 'อีเมล',
+        login: 'เข้าสู่ระบบ',
+        alreadyHaveCode: 'มีรหัสลงทะเบียนแล้ว',
+        activated: 'ลงทะเบียน',
+        name: 'ชื่อ นามสกุล',
+        password: 'รหัสผ่าน',
+        dontHaveCode: 'ยังไม่มีรหัสลงทะเบียน',
+        registerComplete: 'สมัครสมาชิกสำเร็จ',
+        checkEmailGetCode: 'กรุณาตรวจสอบ Email เพื่อรับ "Activate Code"',
+        activatedComplete: 'ลงทะเบียนสำเร็จ',
+        ok: 'ตกลง',
+        err_accountNotActivated: 'ยังไม่ได้ยืนยันการสมัครสมาชิกผ่านอีเมล',
+        err_duplicateEmail: 'อีเมลนี้ถูกใช้งานแล้ว',
+        err_requireInviteCode: 'กรุณากรอกข้อมูล Invite Code',
+        err_invalidInviteCode: 'Invite Code ไม่ถูกต้อง',
+        err_invalidActivatedCode: 'Activated Code ไม่ถูกต้อง หรือ หมดอายุ กรุณาตรวจสอบ อีเมล',
+    },
+    en: {
+        signUp: 'Sign Up',
+        email: 'E-mail Address',
+        login: 'Log in',
+        alreadyHaveCode: 'already have activated code',
+        activated: 'Activate Account',
+        name: 'Name Surname',
+        password: 'Password',
+        dontHaveCode: "do not have activated code",
+        registerComplete: 'Register Complete',
+        checkEmailGetCode: 'Please check your email to activate account',
+        activatedComplete: 'Activated account complate',
+        ok: 'OK',
+        err_accountNotActivated: 'Account not activated',
+        err_duplicateEmail: 'Duplicate email',
+        err_requireInviteCode: 'Require invite code',
+        err_invalidInviteCode: 'Invalid invite code',
+        err_invalidActivatedCode: 'Invalid activated code or expired check your email',
+    }
+}
+
 export default class Login extends Component {
     constructor() {
         super();
@@ -46,10 +87,11 @@ export default class Login extends Component {
             method: 'POST',
             body: JSON.stringify({ 'email': this.state.email })
         })
-            .then(res => res.json())
-            .then(e => {
-                console.log("emailLoginRes", e)
-                if (e.code === 400 || e.code === 401) {
+            .then(res => Promise.all([res, res.json()]))
+            .then(resp => {
+                let response = resp[0]
+                let e = resp[1]
+                if (!response.ok) {
                     throw new CodeError(e.message, e.code);
                 }
                 else {
@@ -64,9 +106,11 @@ export default class Login extends Component {
     loginFailed(err) {
         let msg = ''
         switch (err) {
-            case 'Invalid password': msg = 'อีเมล หรือ รหัสผ่าน ไม่ถูกต้อง'; break;
-            case 'Account not activated': msg = 'ยังไม่ได้ยืนยันการสมัครสมาชิกผ่านอีเมล'; break;
-            case 'Duplicate email': msg = 'อีเมลนี้ถูกใช้งานแล้ว'; break;
+            case 'Account not activated': msg = word[window.language].err_accountNotActivated; break;
+            case 'Duplicate email': msg = word[window.language].err_duplicateEmail; break;
+            case 'require invite Code': msg = word[window.language].err_requireInviteCode; break;
+            case 'Invalid invite Code': msg = word[window.language].err_invalidInviteCode; break;
+            case 'Invalid activated code or expired check your email': msg = word[window.language].err_invalidActivatedCode; break;
             default: msg = err
         }
         clearTimeout(showErr);
@@ -96,10 +140,12 @@ export default class Login extends Component {
                 'password': this.state.password,
             })
         })
-            .then(res => res.json())
-            .then(e => {
-                console.log("emailLoginRes", e)
-                if (e.code === 400 || e.code === 401) {
+            .then(res => Promise.all([res, res.json()]))
+            .then(resp => {
+                console.log("emailLoginRes", resp)
+                let response = resp[0]
+                let e = resp[1]
+                if (!response.ok) {
                     throw new CodeError(e.message, e.code);
                 }
                 else {
@@ -110,6 +156,12 @@ export default class Login extends Component {
             .catch(err => {
                 this.setState({ isLoading: false }, () => this.loginFailed(err.message))
             })
+    }
+
+    changeLang(lang) {
+        window.language = lang
+        window.localStorage.setItem('language', lang)
+        this.forceUpdate()
     }
 
     render() {
@@ -128,12 +180,12 @@ export default class Login extends Component {
                 }
                 <div className='loginBox'>
                     <div style={styles.loginBox}>
-                        {this.state.registerState === 1 && <p className='login-header'>สมัครสมาชิก</p>}
-                        {this.state.registerState === 2 && <p className='login-header'>ลงทะเบียน</p>}
+                        {this.state.registerState === 1 && <p className='login-header'>{word[window.language].signUp}</p>}
+                        {this.state.registerState === 2 && <p className='login-header'>{word[window.language].activated}</p>}
                         {this.state.registerState === 1 &&
                             <div style={styles.loginContainer}>
                                 <FormGroup style={styles.inputBox}>
-                                    <p style={styles.inputLabel} className="label">Email Address</p>
+                                    <p style={styles.inputLabel} className="label">{word[window.language].email}</p>
                                     <Input
                                         value={this.state.email}
                                         onChange={(e) => this.setState({ email: e.target.value })}
@@ -165,21 +217,21 @@ export default class Login extends Component {
                                     />
                                 </FormGroup>
                                 <FormGroup style={{ ...styles.inputBox, marginTop: 20 }}>
-                                    <p style={styles.inputLabel} className="label">ชื่อ - สกุล</p>
+                                    <p style={styles.inputLabel} className="label">{word[window.language].name}</p>
                                     <Input
                                         value={this.state.name}
                                         onChange={(e) => this.setState({ name: e.target.value })}
                                         style={styles.input}
-                                        type="text" name="username" id="username" placeholder="ชื่อ สกุล"
+                                        type="text" name="username" id="username" placeholder={word[window.language].name}
                                     />
                                 </FormGroup>
                                 <FormGroup style={{ ...styles.inputBox, marginTop: 20 }}>
-                                    <p style={styles.inputLabel} className="label">รหัสผ่าน</p>
+                                    <p style={styles.inputLabel} className="label">{word[window.language].password}</p>
                                     <Input
                                         value={this.state.password}
                                         onChange={(e) => this.setState({ password: e.target.value })}
                                         style={styles.input}
-                                        type="password" name="password" id="password" placeholder="รหัสผ่าน"
+                                        type="password" name="password" id="password" placeholder={word[window.language].password}
                                     />
                                 </FormGroup>
                             </div>
@@ -189,40 +241,46 @@ export default class Login extends Component {
                             <span style={styles.errorTxt}>{this.state.failedMsg}</span>
                         </Fade>
                         {this.state.registerState === 1 && <Button onClick={() => this.SendEmail()} style={styles.finishBtn}>
-                            สมัครสมาชิก
+                            {word[window.language].signUp}
                             <FontAwesomeIcon icon={faCaretRight} style={styles.finishBtnIco} />
                         </Button>
                         }
                         {this.state.registerState === 2 && <Button onClick={() => this.register()} style={styles.finishBtn}>
-                            ลงทะเบียน
+                            {word[window.language].activated}
                             <FontAwesomeIcon icon={faCaretRight} style={styles.finishBtnIco} />
                         </Button>
                         }
 
                         <div style={styles.registerContainer}>
-                            <Button style={styles.registerBtn} onClick={() => this.setState({ backToLogin: true })} color="link">เข้าสู่ระบบ</Button>
-                            {this.state.registerState === 1 && <Button style={{ ...styles.registerBtn, color: '#bb4d63' }} onClick={() => this.setState({ registerState: 2 })} color="link">มีรหัสลงทะเบียนแล้ว</Button>}
-                            {this.state.registerState === 2 && <Button style={{ ...styles.registerBtn, color: '#bb4d63' }} onClick={() => this.setState({ registerState: 1 })} color="link">ยังไม่มีรหัสลงทะเบียน</Button>}
+                            <Button style={styles.registerBtn} onClick={() => this.setState({ backToLogin: true })} color="link">{word[window.language].login}</Button>
+                            {this.state.registerState === 1 && <Button style={{ ...styles.registerBtn, color: '#bb4d63' }} onClick={() => this.setState({ registerState: 2 })} color="link">{word[window.language].alreadyHaveCode}</Button>}
+                            {this.state.registerState === 2 && <Button style={{ ...styles.registerBtn, color: '#bb4d63' }} onClick={() => this.setState({ registerState: 1 })} color="link">{word[window.language].dontHaveCode}</Button>}
                         </div>
                     </div>
                 </div>
 
-                <Modal isOpen={this.state.activateComplete}>
-                    <ModalBody>
-                        <span style={styles.ModalHeader}>ลงทะเบียนสำเร็จ</span>
-                    </ModalBody>
-                    <ModalFooter>
-                        <Button style={styles.ModalBtnTxt} color="success" onClick={() => this.setState({ backToLogin: true })}>ตกลง</Button>
-                    </ModalFooter>
-                </Modal>
+                <div style={styles.langBox}>
+                    <Button onClick={() => this.changeLang('th')} color="link"><p style={{ ...styles.langBtn, color: window.language === 'th' ? '#e71c63' : '#aaa' }}>ไทย</p></Button>
+                    <p style={styles.langBtn}>/</p>
+                    <Button onClick={() => this.changeLang('en')} color="link"><p style={{ ...styles.langBtn, color: window.language === 'en' ? '#e71c63' : '#aaa' }}>EN</p></Button>
+                </div>
 
                 <Modal isOpen={this.state.registerComplete}>
                     <ModalBody>
-                        <p style={styles.ModalHeader}>สมัครสมาชิกสำเร็จ</p>
-                        <span style={styles.text}>กรุณาตรวจสอบ Email เพื่อรับ "Activate Code"</span>
+                        <p style={styles.ModalHeader}>{word[window.language].registerComplete}</p>
+                        <span style={styles.text}>{word[window.language].checkEmailGetCode}</span>
                     </ModalBody>
                     <ModalFooter>
-                        <Button style={styles.ModalBtnTxt} color="success" onClick={() => this.setState({ registerState: 2, registerComplete: false })}>ตกลง</Button>
+                        <Button style={styles.ModalBtnTxt} color="success" onClick={() => this.setState({ registerState: 2, registerComplete: false })}>{word[word[window.language].ok]}</Button>
+                    </ModalFooter>
+                </Modal>
+
+                <Modal isOpen={this.state.activateComplete}>
+                    <ModalBody>
+                        <span style={styles.ModalHeader}>{word[window.language].activateComplete}</span>
+                    </ModalBody>
+                    <ModalFooter>
+                        <Button style={styles.ModalBtnTxt} color="success" onClick={() => this.setState({ backToLogin: true })}>{word[word[window.language].ok]}</Button>
                     </ModalFooter>
                 </Modal>
 
@@ -248,4 +306,6 @@ let styles = {
     errAlert: { width: '60vw', marginTop: '10px', margin: 'auto' },
     ModalHeader: { color: '#1c5379', fontFamily: 'DBH', fontSize: '1.75vw', fontWeight: '500' },
     ModalBtnTxt: { color: '#fff', fontFamily: 'DBH', fontSize: '1.75vw', fontWeight: '500' },
+    langBox: { color: '#aaa', display: 'flex', flexDirection: 'row', top: 0, right: 0, alignItems: 'center', alignSelf: 'flex-start', position: 'absolute' },
+    langBtn: { fontFamily: 'DBH', fontSize: '2.5vw' }
 }

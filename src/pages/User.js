@@ -10,6 +10,7 @@ let word = {
         name: 'ชื่อ',
         room: 'ห้อง',
         school: 'โรงเรียน',
+        advisors: 'อาจารย์ที่ปรึกษา/ครูประจำชั้น',
         m: 'ม.',
         stopExam: 'หยุดทำข้อสอบ',
         confirmStopExamTxt: 'คุณต้องการยกเลิกการทำข้อสอบหรือไม่ ข้อมูลข้อสอบชุดนี้จะถูกบันทึกว่า "ไม่ได้ทำการส่งข้อสอบ"',
@@ -20,6 +21,7 @@ let word = {
         name: 'Name',
         room: 'Room',
         school: 'School',
+        advisors: 'Advisors',
         m: 'M.',
         stopExam: 'Stop exam',
         confirmStopExamTxt: 'Do you want to cancel the exam? This Answersheet will be recorded as "Did not send the answers"',
@@ -63,6 +65,14 @@ export default class User extends Component {
             })
     }
 
+    getTeacherText(data) {
+        let txt = ''
+        for (let i in data) {
+            txt += (data[i].name + ', ')
+        }
+        return txt.slice(0, -2)
+    }
+
     render() {
         return (
             <div className="login loginContainer">
@@ -81,6 +91,7 @@ export default class User extends Component {
                         <p style={styles.detailTxt}><span style={styles.detailTopic}>{word[window.language].name}:</span> {this.state.user && this.state.user.name}</p>
                         <p style={styles.detailTxt}><span style={styles.detailTopic}>{word[window.language].room}:</span> {word[window.language].m}{this.state.user && this.state.user.grade}/{this.state.user && this.state.user.room}</p>
                         <p style={styles.detailTxt}><span style={styles.detailTopic}>{word[window.language].school}:</span> {this.state.user && this.state.user.school && this.state.user.school.name}</p>
+                        <p style={styles.detailTxt}><span style={styles.detailTopic}>{word[window.language].advisors}:</span> {this.state.user && this.state.user.teachers && this.getTeacherText(this.state.user.teachers)}</p>
                     </div>
                     <img src={require('../image/decorate02.png')} style={styles.decorateLeft} alt={'decorate02'} />
                     <img src={require('../image/decorate01.png')} style={styles.decorateRight} alt={'decorate01'} />
@@ -89,7 +100,7 @@ export default class User extends Component {
                     <ModalHeader toggle={() => this.setState({ quizModal: false }, () => alert(word[window.language].stopExam))}>{word[window.language].stopExam} ?</ModalHeader>
                     <ModalBody>
                         {word[window.language].confirmStopExamTxt}
-                     </ModalBody>
+                    </ModalBody>
                     <ModalFooter>
                         <Button color="danger" onClick={() => this.setState({ quizModal: false }, () => window.history.go(0))}>{word[window.language].stopExam}</Button>{' '}
                         <Button color="secondary" onClick={() => this.setState({ quizModal: false })}>{word[window.language].cancel}</Button>
