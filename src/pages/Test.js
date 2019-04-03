@@ -447,7 +447,7 @@ class Test extends Component {
                 .then(res => res.json())
                 .then(exam => {
                     console.log('exam data', exam, data, item)
-                    this.setState({ /*: false, exam,*/ pickedQuiz: item, pickedQuizData: data, fullTimer: data.duration, timer: data.duration * 60 })
+                    this.setState({ /*: false,*/ exam, pickedQuiz: item, pickedQuizData: data, fullTimer: data.duration, timer: data.duration * 60 })
                 })
                 .catch(e => {
                     console.log(e)
@@ -517,7 +517,7 @@ class Test extends Component {
                                 return (
                                     <div key={index} style={styles.quizBox}>
                                         <div style={{ ...styles.quizTitleContainer, borderColor: titleColor }}>
-                                            <div onClick={() => this.toggleDetail("#detail" + index)} style={{ ...styles.quizTitleBox, backgroundColor: titleColor }}>
+                                            <div onClick={() => this.toggleDetail("#detail" + index)} style={{ ...styles.quizTitleBox, backgroundColor: titleColor, cursor: 'pointer' }}>
                                                 <p style={styles.quizTitle}>{item.title}</p>
                                                 <FontAwesomeIcon icon={this.state.detailPicked === ("#detail" + index) ? faEye : faEyeSlash} style={styles.quizTitleIco} />
                                             </div>

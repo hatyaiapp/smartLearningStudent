@@ -75,7 +75,7 @@ export default class Setting extends Component {
             return <Redirect push to="/user" />;
         }
 
-        if (this.state.goTestPage && page !== 'test') {
+        if (this.state.goTestPage && page !== 'home') {
             return <Redirect push to="/test" />;
         }
 
