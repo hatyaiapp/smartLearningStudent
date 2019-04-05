@@ -75,7 +75,7 @@ export default class Login extends Component {
     }
 
     componentDidMount() {
-        this.setState({ activatecode: this.props.ac })
+        this.setState({ activatecode: this.props.ac, registerState: this.props.ac ? 2 : 1 })
     }
 
     SendEmail() {

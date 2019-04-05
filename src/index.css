@@ -7,7 +7,17 @@ body, html {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow: hidden
+  overflow: hidden;
+}
+
+::-moz-selection { /* Code for Firefox */
+  /* color: red; */
+  background: #eee;
+}
+
+::selection {
+  /* color: red;  */
+  background: #eee;
 }
 
 @font-face {

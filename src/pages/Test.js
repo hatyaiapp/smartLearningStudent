@@ -122,6 +122,7 @@ class Test extends Component {
             quizModal: false,
             answersheet: null,
             isSendingAnswer: false,
+            isLoading: true,
             quitConfirmed: false,
             focusExam: null
         }
@@ -515,59 +516,64 @@ class Test extends Component {
             <div style={styles.chooseQuizContainer}>
                 <p style={styles.chooseQuizTopic}>{word[window.language].chooseExam}</p>
                 <div style={styles.cutLine} />
-                {this.state.qstn.length > 0 ?
-                    <div style={{ display: 'flex', flex: 1, flexDirection: 'column' }}>
-                        <div style={styles.chooseQuizDataBox}>
-                            {this.state.qstn.map((item, index) => {
-                                let titleColor = index % 2 == '1' ? '#F0592B' : '#FAAE3C'
-                                return (
-                                    <div key={index} style={styles.quizBox}>
-                                        <div style={{ ...styles.quizTitleContainer, borderColor: titleColor }}>
-                                            <div onClick={() => this.toggleDetail("#detail" + index)} style={{ ...styles.quizTitleBox, backgroundColor: titleColor, cursor: 'pointer' }}>
-                                                <p style={styles.quizTitle}>{item.title}</p>
-                                                <FontAwesomeIcon icon={this.state.detailPicked === ("#detail" + index) ? faEye : faEyeSlash} style={styles.quizTitleIco} />
-                                            </div>
-                                            <Collapse style={styles.quizDescBox} isOpen={this.state.detailPicked === "#detail" + index}>
-                                                <div style={styles.quizDesc1}>
-                                                    <p style={styles.quizDescTxt}><span style={styles.quizDescTopic}>{word[window.language].classId}:</span> {item.code}</p>
-                                                    <p style={styles.quizDescTxt}><span style={styles.quizDescTopic}>{word[window.language].room}:</span> {this.getRoomListTxt(item.grade, item.rooms)}</p>
-                                                </div>
-                                                <div style={styles.quizDesc2}>
-                                                    <p style={styles.quizDescTxt}><span style={styles.quizDescTopic}>{word[window.language].teacher}:</span> {item.teacher && item.teacher.name}</p>
-                                                    <p style={styles.quizDescTxt}><span style={styles.quizDescTopic}>{word[window.language].course}:</span> {subjectCode.find(sc => { return item.subjectCode === sc.code })[window.language]}</p>
-                                                </div>
-                                            </Collapse>
-                                        </div>
-                                        <div style={styles.quizDesc3}>
-                                            {item.quizevents.map((quiz, i) => {
-                                                return (
-                                                    <Button key={i} style={styles.quizeventsContainer} color={'link'} onClick={() => this.setState({ event: index + '_' + i, focusExam: this.getOutOfTimeTxt(quiz.start, quiz.end) })}>
-                                                        <CustomInput type="radio" id={index + '_' + i} name="customRadio" checked={index + '_' + i === this.state.event} onChange={() => null} />
-                                                        <div style={styles.quizeventsContainerInner}>
-                                                            <p style={styles.quizDescTxt2}>{'[ ข้อสอบชุดที่ X XXXXXXXXXXXXXXXX ]'}</p>
-                                                            <div style={styles.quizeventsBox}>
-                                                                <p style={{ ...styles.quizDescTxt2, color: titleColor }}>{word[window.language].period}: {this.getDateTxt(quiz.start)} - {this.getDateTxt(quiz.end)}</p>
-                                                                <p style={{ ...styles.quizDescTxt, color: titleColor }}>{word[window.language].duration}: {this.getDurationTxt(quiz.duration)}</p>
-                                                                {/* <Button onClick={() => this.pickExam(quiz.exam, quiz, item)} disabled={!this.isAvailable(quiz.start, quiz.end)} color={this.isAvailable(quiz.start, quiz.end) ? 'success' : 'secondary'} style={styles.pickQuizBtn}>
-                                                                        <p style={styles.startQuizTxt}>{word[window.language].startQuiz}</p>
-                                                                    </Button> */}
-                                                            </div>
-                                                        </div>
-                                                    </Button>
-                                                )
-                                            })}
-                                        </div>
-                                    </div>
-                                )
-                            })}
-                        </div>
-                        <div style={styles.cutLine} />
-                        {this.getStartQuizBtn()}
+                {this.state.isLoading ?
+                    <div style={styles.answerContainerFullfill}>
+                        <Spinner type="grow" color="warning" style={styles.sendingAnswerLoading} />
                     </div>
                     :
-                    <p style={styles.text}>
-                        {word[window.language].noExam}
-                    </p>
+                    this.state.qstn.length > 0 ?
+                        <div style={{ display: 'flex', flex: 1, flexDirection: 'column' }}>
+                            <div style={styles.chooseQuizDataBox}>
+                                {this.state.qstn.map((item, index) => {
+                                    let titleColor = index % 2 == '1' ? '#F0592B' : '#FAAE3C'
+                                    return (
+                                        <div key={index} style={styles.quizBox}>
+                                            <div style={{ ...styles.quizTitleContainer, borderColor: titleColor }}>
+                                                <div onClick={() => this.toggleDetail("#detail" + index)} style={{ ...styles.quizTitleBox, backgroundColor: titleColor, cursor: 'pointer' }}>
+                                                    <p style={styles.quizTitle}>{item.title}</p>
+                                                    <FontAwesomeIcon icon={this.state.detailPicked === ("#detail" + index) ? faEye : faEyeSlash} style={styles.quizTitleIco} />
+                                                </div>
+                                                <Collapse style={styles.quizDescBox} isOpen={this.state.detailPicked === "#detail" + index}>
+                                                    <div style={styles.quizDesc1}>
+                                                        <p style={styles.quizDescTxt}><span style={styles.quizDescTopic}>{word[window.language].classId}:</span> {item.code}</p>
+                                                        <p style={styles.quizDescTxt}><span style={styles.quizDescTopic}>{word[window.language].room}:</span> {this.getRoomListTxt(item.grade, item.rooms)}</p>
+                                                    </div>
+                                                    <div style={styles.quizDesc2}>
+                                                        <p style={styles.quizDescTxt}><span style={styles.quizDescTopic}>{word[window.language].teacher}:</span> {item.teacher && item.teacher.name}</p>
+                                                        <p style={styles.quizDescTxt}><span style={styles.quizDescTopic}>{word[window.language].course}:</span> {subjectCode.find(sc => { return item.subjectCode === sc.code })[window.language]}</p>
+                                                    </div>
+                                                </Collapse>
+                                            </div>
+                                            <div style={styles.quizDesc3}>
+                                                {item.quizevents.map((quiz, i) => {
+                                                    return (
+                                                        <Button key={i} style={styles.quizeventsContainer} color={'link'} onClick={() => this.setState({ event: index + '_' + i, focusExam: this.getOutOfTimeTxt(quiz.start, quiz.end) })}>
+                                                            <CustomInput type="radio" id={index + '_' + i} name="customRadio" checked={index + '_' + i === this.state.event} onChange={() => null} />
+                                                            <div style={styles.quizeventsContainerInner}>
+                                                                <p style={styles.quizDescTxt2}>{'[ ข้อสอบชุดที่ X XXXXXXXXXXXXXXXX ]'}</p>
+                                                                <div style={styles.quizeventsBox}>
+                                                                    <p style={{ ...styles.quizDescTxt2, color: titleColor }}>{word[window.language].period}: {this.getDateTxt(quiz.start)} - {this.getDateTxt(quiz.end)}</p>
+                                                                    <p style={{ ...styles.quizDescTxt, color: titleColor }}>{word[window.language].duration}: {this.getDurationTxt(quiz.duration)}</p>
+                                                                    {/* <Button onClick={() => this.pickExam(quiz.exam, quiz, item)} disabled={!this.isAvailable(quiz.start, quiz.end)} color={this.isAvailable(quiz.start, quiz.end) ? 'success' : 'secondary'} style={styles.pickQuizBtn}>
+                                                                        <p style={styles.startQuizTxt}>{word[window.language].startQuiz}</p>
+                                                                    </Button> */}
+                                                                </div>
+                                                            </div>
+                                                        </Button>
+                                                    )
+                                                })}
+                                            </div>
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                            <div style={styles.cutLine} />
+                            {this.getStartQuizBtn()}
+                        </div>
+                        :
+                        <p style={styles.text}>
+                            {word[window.language].noExam}
+                        </p>
                 }
             </div>
         )
