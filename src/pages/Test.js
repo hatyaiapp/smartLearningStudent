@@ -268,7 +268,7 @@ class Test extends Component {
                     }
 
                     //test
-                    // this.setState({ isStart: true, isLoading: false,startExamModal:false, }, () => {
+                    // this.setState({ isStart: true, isLoading: false, startExamModal: false, answersheet: e }, () => {
                     //     this.clockCall = setInterval(() => {
                     //         this.decrementClock();
                     //     }, 1000);
@@ -459,13 +459,19 @@ class Test extends Component {
 
     submit() {
         console.log(this.state.answer, this.state.answersheet)
+        let _this = this
+        let answer = Object.keys(_this.state.answer).map(function (key) {
+            return _this.state.answer[key]
+        });
+        console.log(answer)
+
         this.setState({ isSendingAnswer: true }, () => {
             fetch('http://student.questionquick.com/quiz/' + this.state.answersheet._id, {
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
                 method: 'PUT',
                 body: JSON.stringify({
-                    answers: this.state.answer
+                    answers: answer
                 })
             })
                 .then(res => res.json())
@@ -527,7 +533,7 @@ class Test extends Component {
                                                     <p style={styles.quizDescTxt}><span style={styles.quizDescTopic}>{word[window.language].room}:</span> {this.getRoomListTxt(item.grade, item.rooms)}</p>
                                                 </div>
                                                 <div style={styles.quizDesc2}>
-                                                    <p style={styles.quizDescTxt}><span style={styles.quizDescTopic}>{word[window.language].teacher}:</span> {item.teacher.name}</p>
+                                                    <p style={styles.quizDescTxt}><span style={styles.quizDescTopic}>{word[window.language].teacher}:</span> {item.teacher && item.teacher.name}</p>
                                                     <p style={styles.quizDescTxt}><span style={styles.quizDescTopic}>{word[window.language].course}:</span> {subjectCode.find(sc => { return item.subjectCode === sc.code })[window.language]}</p>
                                                 </div>
                                             </Collapse>
