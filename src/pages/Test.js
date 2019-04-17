@@ -7,6 +7,7 @@ import { Player } from 'video-react';
 import ReactAudioPlayer from 'react-audio-player';
 import SideNav from '../_component/sideNav'
 import { BrowserRouter as Router, Route, Link, Redirect } from "react-router-dom";
+import LinesEllipsis from 'react-lines-ellipsis'
 import '@trendmicro/react-sidenav/dist/react-sidenav.css';
 
 var subjectCode = [
@@ -643,7 +644,7 @@ class Test extends Component {
                             <div style={styles.diagramBox}>
                                 <div style={styles.diagramBoxInner}>
                                     {this.state.exam.map((d, index) => {
-                                        let diagramBtn = { width: '1.5vw', height: '1.5vw', border: this.state.current === index ? '2px solid #337ab7' : '2px solid transparent', backgroundColor: this.state.answer[index] !== undefined ? '#44b29c' : '#d9d5d5', marginTop: 2, marginLeft: 2, padding: 0 }
+                                        let diagramBtn = { width: '20px', height: '20px', border: this.state.current === index ? '2px solid #337ab7' : '2px solid transparent', backgroundColor: this.state.answer[index] !== undefined ? '#44b29c' : '#d9d5d5', marginTop: 2, marginLeft: 2, padding: 0 }
                                         return (
                                             <Button key={index} onClick={() => this.setState({ current: index })} style={diagramBtn}>
                                                 <p style={styles.diagramTxt}>{index + 1}</p>
@@ -979,7 +980,7 @@ const styles = {
     diagramProgress: { fontFamily: 'DBH', fontWeight: 500, fontSize: '24px', borderBottom: '2px solid #ffeb67' },
     diagramBox: { display: 'flex', flex: 1, overflowY: 'scroll', },
     diagramBoxInner: { display: 'flex', flexDirection: 'row', flexWrap: 'wrap', alignSelf: 'flex-start' },
-    diagramTxt: { fontSize: '24px', fontFamily: 'DBH', fontWeight: 500, color: '#000', marginTop: -5 },
+    diagramTxt: { fontSize: '18px', fontFamily: 'DBH', fontWeight: 500, color: '#000', marginTop: -5 },
     diagramDescContainer: { backgroundColor: '#fff29e', borderTop: '2px solid #ffeb67' },
     diagramDescBox: { display: 'flex', alignItems: 'center' },
     diagramDescBtn1: { width: '1.5vw', height: '1.5vw', border: '2px solid #337ab7', backgroundColor: '#fff', marginTop: 2, marginLeft: 2, padding: 0, borderRadius: 3, marginRight: 5 },

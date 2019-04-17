@@ -271,7 +271,7 @@ export default class Login extends Component {
                         <span style={styles.text}>{word[window.language].checkEmailGetCode}</span>
                     </ModalBody>
                     <ModalFooter>
-                        <Button style={styles.ModalBtnTxt} color="success" onClick={() => this.setState({ registerState: 2, registerComplete: false })}>{word[word[window.language].ok]}</Button>
+                        <Button style={styles.ModalBtnTxt} color="success" onClick={() => this.setState({ registerState: 2, registerComplete: false })}>{word[window.language].ok}</Button>
                     </ModalFooter>
                 </Modal>
 
@@ -280,7 +280,7 @@ export default class Login extends Component {
                         <span style={styles.ModalHeader}>{word[window.language].activateComplete}</span>
                     </ModalBody>
                     <ModalFooter>
-                        <Button style={styles.ModalBtnTxt} color="success" onClick={() => this.setState({ backToLogin: true })}>{word[word[window.language].ok]}</Button>
+                        <Button style={styles.ModalBtnTxt} color="success" onClick={() => this.setState({ backToLogin: true })}>{word[window.language].ok}</Button>
                     </ModalFooter>
                 </Modal>
 
