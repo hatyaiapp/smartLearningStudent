@@ -44,7 +44,7 @@ class Login extends Component {
         super();
         this.state = {
             type: 'student',
-            username: 'natruja@jkt.com',
+            username: '',
             password: '',
             isLoading: false,
             redirect: false,

@@ -44,34 +44,32 @@ export default class Setting extends Component {
                 }
                 <div className='quizBox'>
                     <div style={styles.container}>
-                        <div style={styles.container}>
-                            <p style={styles.topic}>{word[window.language].setting}</p>
-                            <div style={styles.box}>
-                                <p style={styles.settingTopic}>ภาษา/Language</p>
-                                <div style={styles.languageBox}>
-                                    <Button
-                                        style={{ ...styles.languageBtn, color: window.language === 'th' ? '#2abaf0' : '#aaa' }}
-                                        color={'link'}
-                                        onClick={() => {
-                                            window.language = 'th'
-                                            localStorage.setItem('language', 'th');
-                                            this.forceUpdate()
-                                        }}
-                                    >
-                                        ภาษาไทย
+                        <p style={styles.topic}>{word[window.language].setting}</p>
+                        <div style={styles.box}>
+                            <p style={styles.settingTopic}>ภาษา/Language</p>
+                            <div style={styles.languageBox}>
+                                <Button
+                                    style={{ ...styles.languageBtn, color: window.language === 'th' ? '#2abaf0' : '#aaa' }}
+                                    color={'link'}
+                                    onClick={() => {
+                                        window.language = 'th'
+                                        localStorage.setItem('language', 'th');
+                                        this.forceUpdate()
+                                    }}
+                                >
+                                    ภาษาไทย
                                 </Button>
-                                    <Button
-                                        style={{ ...styles.languageBtn, color: window.language === 'en' ? '#2abaf0' : '#aaa' }}
-                                        color={'link'}
-                                        onClick={() => {
-                                            window.language = 'en'
-                                            localStorage.setItem('language', 'en');
-                                            this.forceUpdate()
-                                        }}
-                                    >
-                                        English
+                                <Button
+                                    style={{ ...styles.languageBtn, color: window.language === 'en' ? '#2abaf0' : '#aaa' }}
+                                    color={'link'}
+                                    onClick={() => {
+                                        window.language = 'en'
+                                        localStorage.setItem('language', 'en');
+                                        this.forceUpdate()
+                                    }}
+                                >
+                                    English
                                 </Button>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -86,7 +84,7 @@ export default class Setting extends Component {
 const styles = {
     loadingContainer: { display: 'flex', flex: 1, backgroundColor: '#000', opacity: '0.5', position: 'absolute', width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center' },
     loading: { width: '3rem', height: '3rem' },
-    container: { zIndex: 2, width: '80vw', height: '80vh', backgroundColor: '#fff', alignSelf: 'center', borderRadius: 20, display: 'flex', flexDirection: 'column', overflowY: 'scroll', },
+    container: { zIndex: 2, width: '80vw', height: '80vh', backgroundColor: '#fff', alignSelf: 'center', borderRadius: 20, display: 'flex', flexDirection: 'column', overflowY: 'scroll', marginLeft: '60px' },
     topic: { color: '#ff5f6d', fontFamily: 'DBH', fontSize: '45px' },
     decotateLeft: { bottom: 0, left: 0, position: 'absolute', width: '25vw' },
     decotateRight: { bottom: 0, right: 0, position: 'absolute', width: '25vw' },

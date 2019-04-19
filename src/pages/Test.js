@@ -94,6 +94,19 @@ var word = {
     }
 }
 
+let hidden = null;
+let visibilityChange = null;
+if (typeof document.hidden !== 'undefined') { // Opera 12.10 and Firefox 18 and later support 
+    hidden = 'hidden';
+    visibilityChange = 'visibilitychange';
+} else if (typeof document.msHidden !== 'undefined') {
+    hidden = 'msHidden';
+    visibilityChange = 'msvisibilitychange';
+} else if (typeof document.webkitHidden !== 'undefined') {
+    hidden = 'webkitHidden';
+    visibilityChange = 'webkitvisibilitychange';
+}
+
 class CodeError extends Error {
     constructor(message, code) {
         super(message);
@@ -131,6 +144,7 @@ class Test extends Component {
 
     componentDidMount() {
         let _this = this
+        document.addEventListener(visibilityChange, this.handleVisibilityChange, false);
         window.addEventListener("beforeunload", (e) => this.onUnload(e, _this))
         window.history.pushState(null, null, window.location.href);
         window.onpopstate = function (e) {
@@ -225,6 +239,18 @@ class Test extends Component {
 
     componentWillUnmount() {
         // window.removeEventListener("beforeunload", this.onUnload)
+    }
+
+    handleVisibilityChange = () => {
+        if (document[hidden]) {
+            console.log('if')
+            // alert(1)
+            // this.setState({ actions: [...this.state.actions, 'hide'] });
+        } else {
+            console.log('else')
+            // alert(2)
+            // this.setState({ actions: [...this.state.actions, 'show'] });
+        }
     }
 
     start() {
@@ -441,8 +467,8 @@ class Test extends Component {
         let item = this.state.qstn[arrIndex1]
         let data = this.state.qstn[arrIndex1].quizevents[arrIndex2]
         console.log(item, data, arrIndex1, arrIndex2)
-        this.setState({ isLoading: true, startExamModal: true }, () => {
-            fetch('http://student.questionquick.com/exam/' + data.exam + '/questions',
+        this.setState({ isFetchingExam: true, startExamModal: true }, () => {
+            fetch('http://student.questionquick.com/exam/' + data.exam._id + '/questions',
                 {
                     credentials: 'include',
                 })
@@ -454,7 +480,7 @@ class Test extends Component {
                 .catch(e => {
                     console.log(e)
                     //this.setState({ isLoading: false })
-                    this.setState({ isLoading: false })
+                    this.setState({ isFetchingExam: false })
                 })
         })
     }
@@ -552,7 +578,7 @@ class Test extends Component {
                                                             <CustomInput type="radio" id={index + '_' + i} name="customRadio" checked={index + '_' + i === this.state.event} onChange={() => null} />
                                                             <div style={styles.quizeventsContainerInner}>
                                                                 <div style={styles.quizeventsBox}>
-                                                                    <p style={styles.quizDescTxt2}>{'[ ข้อสอบชุดที่ X XXXXXXXXXXXXXXXX ]'}</p>
+                                                                    <p style={styles.quizDescTxt2}>{quiz && quiz.exam && quiz.exam.title}</p>
                                                                     {<p style={{ ...styles.quizDescTxt, color: '#ccc', fontSize: '24px' }}>{this.getOutOfTimeTxt(quiz.start, quiz.end)}</p>}
                                                                 </div>
                                                                 <div style={styles.quizeventsBox}>
@@ -815,6 +841,8 @@ class Test extends Component {
             <Modal isOpen={this.state.startExamModal} toggle={() => this.setState({ startExamModal: false, isLoading: false })}>
                 <ModalHeader toggle={() => this.setState({ startExamModal: false, isLoading: false })}>
                     <span style={styles.quizDetailTxt1}>{this.state.pickedQuiz.title}</span>
+                    <br />
+                    <span style={{ ...styles.quizDetailTxt2, color: '#000' }}>{this.state.pickedQuizData.exam.title}</span>
                 </ModalHeader>
                 <ModalBody>
                     <p style={styles.quizDetailTxt2}>({this.state.pickedQuiz.code})</p>
@@ -925,7 +953,7 @@ const styles = {
     outOffTimeTxt: { color: 'red', fontSize: '24px', fontFamily: 'DBH' },
     text: { color: '#000', fontFamily: 'DBH', fontSize: '24px' },
 
-    chooseQuizContainer: { zIndex: 2, width: '80vw', height: '80vh', backgroundColor: '#fff', alignSelf: 'center', borderRadius: 20, display: 'flex', flexDirection: 'column' },
+    chooseQuizContainer: { zIndex: 2, width: '80vw', height: '80vh', backgroundColor: '#fff', alignSelf: 'center', borderRadius: 20, display: 'flex', flexDirection: 'column', marginLeft: '60px' },
     chooseQuizTopic: { color: '#ff5f6d', fontFamily: 'DBH', fontSize: '45px', alignSelf: 'flex-start', margin: 0, marginLeft: 30 },
     chooseQuizDataBox: { display: 'flex', flex: 1, flexDirection: 'column', overflowY: 'scroll' },
     quizTitle: { color: '#000', fontFamily: 'DBH', fontSize: '30px', margin: 5 },
@@ -940,7 +968,7 @@ const styles = {
     pickQuizBtn: { height: 40, paddingTop: 0, paddingBottom: 0 },
     startQuizTxt: { color: '#fff', fontFamily: 'DBH', fontSize: '24px', margin: 0 },
 
-    quizDetailContainer: { zIndex: 2, width: '80vw', height: '80vh', backgroundColor: '#fff', alignSelf: 'center', borderRadius: 20, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' },
+    quizDetailContainer: { zIndex: 2, width: '80vw', height: '80vh', backgroundColor: '#fff', alignSelf: 'center', borderRadius: 20, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', marginLeft: '60px' },
     quizDetailTxt1: { color: '#ff5f6d', fontFamily: 'DBH', fontSize: '45px' },
     quizDetailTxt2: { color: '#ff5f6d', fontFamily: 'DBH', fontSize: '30px' },
     quizDetailTxt3: { color: '#7fd642', fontFamily: 'DBH', fontSize: '30px' },
@@ -959,7 +987,7 @@ const styles = {
     backPickQuizBtnTxt: { fontFamily: 'DBH', color: '#aaa', fontWeight: 'bolder', fontSize: '24px' },
     backPickQuizBtnIco: { width: '2vw', fontSize: '24px', color: '#aaa' },
 
-    quizContainer: { zIndex: 2, width: '85vw', height: '80vh', backgroundColor: '#fff', alignSelf: 'center', borderRadius: 20, display: 'flex', flexDirection: 'row' },
+    quizContainer: { zIndex: 2, width: '85vw', height: '80vh', backgroundColor: '#fff', alignSelf: 'center', borderRadius: 20, display: 'flex', flexDirection: 'row', marginLeft: '60px' },
     quizBox1: { display: 'flex', flex: 1, flexDirection: 'column' },
     quizBox1_1: { display: 'flex', flexDirection: 'column', backgroundColor: '#98def8', marginBottom: 10, marginTop: 10, marginLeft: 10, border: '2px solid #23b8f0', borderRadius: 10, overflow: 'hidden' },
     quizBox1_1Topic: { fontFamily: 'DBH', color: '#1c5379', alignSelf: 'center', fontSize: '24px', flex: 1, fontWeight: 500, margin: 0 },

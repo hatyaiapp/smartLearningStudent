@@ -16,8 +16,7 @@
   background-image: url('./image/bg2.png');
 
   /* Full height */
-  height: 500; 
-
+  height: 500;
   /* Center and scale the image nicely */
   background-position: center;
   background-repeat: no-repeat;
@@ -103,6 +102,7 @@
   background-color: rgba(255,255,255,0.3);
   transition: 0.3s all;
 }
+
 .field:hover {
   background-color: rgba(255, 255, 255, 0.45);
   box-shadow: 0px 4px 20px 0px rgba(0, 0, 0, 0.05);
