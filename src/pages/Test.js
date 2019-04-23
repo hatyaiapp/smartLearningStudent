@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import '../App.css';
-import { Button, Modal, ModalHeader, ModalBody, ModalFooter, UncontrolledCollapse, Spinner, CustomInput, Collapse } from 'reactstrap';
+import { Button, Modal, ModalHeader, ModalBody, ModalFooter, UncontrolledCollapse, Spinner, CustomInput, Collapse, Toast, ToastHeader, ToastBody, Input, Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
 import { faUser, faClock, faFileAlt, faCalendarAlt, faCaretRight, faCaretLeft, faExclamationCircle, faInfoCircle, faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Player } from 'video-react';
@@ -9,6 +9,25 @@ import SideNav from '../_component/sideNav'
 import { BrowserRouter as Router, Route, Link, Redirect } from "react-router-dom";
 import LinesEllipsis from 'react-lines-ellipsis'
 import '@trendmicro/react-sidenav/dist/react-sidenav.css';
+
+var matchingAnswerExp = {
+    article: [
+        { id: 'QWERT', value: 'ant' },
+        { id: 'YUIOP', value: 'bird' },
+        { id: 'ASDFG', value: 'cat' },
+        { id: 'HJKLZ', value: 'dog' },
+        { id: 'XCVBN', value: 'elephant' },
+        { id: 'QAZWS', value: 'fox' },
+    ],
+    answer: [
+        { id: 'TGBYH', value: 'b' },
+        { id: 'HFRDS', value: 'e' },
+        { id: 'IHDWC', value: 'a' },
+        { id: 'AEFOK', value: 'd' },
+        { id: 'MKGTS', value: 'f' },
+        { id: 'RUSCV', value: 'c' },
+    ]
+}
 
 var subjectCode = [
     { code: 'thai', th: 'ภาษาไทย', en: 'Thai' },
@@ -57,6 +76,8 @@ var word = {
         cancel: 'ยกเลิก',
         stopExam: 'หยุดทำข้อสอบ',
         stopExamWarning: 'คุณต้องการยกเลิกการทำข้อสอบหรือไม่ ข้อมูลข้อสอบชุดนี้จะถูกบันทึกว่า "ไม่ได้ทำการส่งข้อสอบ"',
+        answer: 'คำตอบ',
+        article: 'คำถาม'
     },
     en: {
         m: 'M.',
@@ -91,6 +112,8 @@ var word = {
         cancel: 'Cancel',
         stopExam: 'Stop doing the exam',
         stopExamWarning: 'Do you want to stop doing the exam? This answer sheet will be saved with "Do not submit the exam"',
+        answer: 'Answer',
+        article: 'Article'
     }
 }
 
@@ -138,13 +161,19 @@ class Test extends Component {
             isSendingAnswer: false,
             isLoading: true,
             quitConfirmed: false,
-            focusExam: null
+            focusExam: null,
+            toastData: '',
+            isFoundVideoRef: false,
+            latestVideoIndex: 0,
+            matchingDropdownOpenIndex: -1
         }
     }
 
     componentDidMount() {
         let _this = this
-        document.addEventListener(visibilityChange, this.handleVisibilityChange, false);
+        // this.refs.player.subscribeToStateChange(this.handleStateChange.bind(this));
+        document.addEventListener(visibilityChange, () => this.handleVisibilityChange(this), false);
+        window.addEventListener("focus", () => this.onFocus(this))
         window.addEventListener("beforeunload", (e) => this.onUnload(e, _this))
         window.history.pushState(null, null, window.location.href);
         window.onpopstate = function (e) {
@@ -238,16 +267,58 @@ class Test extends Component {
     }
 
     componentWillUnmount() {
+        window.removeEventListener("focus", this.onFocus)
         // window.removeEventListener("beforeunload", this.onUnload)
     }
 
-    handleVisibilityChange = () => {
+    onFocus(_this) {
+        console.log('focus', _this)
+        // let _this = this
+        _this.setState({ toastData: 'focus' }, () => {
+            setTimeout(function () {
+                _this.setState({ toastData: '' })
+            }, 3000);
+        })
+    }
+
+    handleStateChange(state, prevState) {
+        // copy player state to this component's state
+        // console.log(state.currentTime)
+        if (Math.floor(state.currentTime) === 2 && this.state.latestVideoIndex !== 1) {
+            this.refs.player.pause();
+            this.state.latestVideoIndex = 1
+            console.log('do exam 2')
+        }
+        if (Math.floor(state.currentTime) === 4 && this.state.latestVideoIndex !== 2) {
+            this.refs.player.pause();
+            this.state.latestVideoIndex = 2
+            console.log('do exam 4')
+        }
+        if (Math.floor(state.currentTime) === 6 && this.state.latestVideoIndex !== 3) {
+            this.refs.player.pause();
+            this.state.latestVideoIndex = 3
+            console.log('do exam 6')
+        }
+    }
+
+    handleVisibilityChange(_this) {
+        console.log('handleVisibilityChange')
         if (document[hidden]) {
-            console.log('if')
+            console.log('change tab')
+            _this.setState({ toastData: 'focus' }, () => {
+                setTimeout(function () {
+                    _this.setState({ toastData: 'change tab' })
+                }, 3000);
+            })
             // alert(1)
             // this.setState({ actions: [...this.state.actions, 'hide'] });
         } else {
-            console.log('else')
+            console.log('back from other tab')
+            _this.setState({ toastData: 'focus' }, () => {
+                setTimeout(function () {
+                    _this.setState({ toastData: 'back from other tab' })
+                }, 3000);
+            })
             // alert(2)
             // this.setState({ actions: [...this.state.actions, 'show'] });
         }
@@ -278,7 +349,7 @@ class Test extends Component {
                     let response = resp[0]
                     let e = resp[1]
 
-                    if (e.message === 'Already test') {
+                    /*if (e.message === 'Already test') {
                         alert('คุณได้ทำข้อสอบชุดนี้แล้ว')
                         this.setState({ isLoading: false })
                     }
@@ -293,14 +364,14 @@ class Test extends Component {
                                 this.decrementClock();
                             }, 1000);
                         })
-                    }
+                    }*/
 
-                    //test
-                    // this.setState({ isStart: true, isLoading: false, startExamModal: false, answersheet: e }, () => {
-                    //     this.clockCall = setInterval(() => {
-                    //         this.decrementClock();
-                    //     }, 1000);
-                    // })
+                    // test
+                    this.setState({ isStart: true, isLoading: false, startExamModal: false, answersheet: e }, () => {
+                        this.clockCall = setInterval(() => {
+                            this.decrementClock();
+                        }, 1000);
+                    })
                 })
                 .catch(err => {
                     this.setState({ isLoading: false }, () => alert(err.message))
@@ -355,10 +426,10 @@ class Test extends Component {
         if (this.state.isTimeOut) {
             return '#ffafaf'
         }
-        else if (this.state.fullTimer * 0.5 < this.state.timer) {
+        else if (this.state.fullTimer * 60 * 0.5 < this.state.timer) {
             return '#b3e0d7'
         }
-        else if (this.state.fullTimer * 0.25 < this.state.timer) {
+        else if (this.state.fullTimer * 60 * 0.25 < this.state.timer) {
             return '#f0f190'
         }
         else {
@@ -649,7 +720,8 @@ class Test extends Component {
                             </div>
                             <div style={styles.quizBox1_1DetailBox}>
                                 <FontAwesomeIcon icon={faFileAlt} style={styles.quizBox1_1DetailIco} />
-                                <span style={styles.quizBox1_1DetailTxt}>: {this.state.pickedQuiz.title}</span>
+                                {/* <span style={styles.quizBox1_1DetailTxt}>: {this.state.pickedQuiz.title}</span> */}
+                                <span style={styles.quizBox1_1DetailTxt}>: {this.state.pickedQuizData.exam.title}</span>
                             </div>
                         </div>
                     </div>
@@ -711,6 +783,7 @@ class Test extends Component {
                         }
                     </div>
                 </div>
+
                 <div style={styles.quizBox2}>
                     <div style={styles.examTopicContainer}>
                         <h1 style={styles.examTopicTxt}>{word[window.language].question} {this.state.current + 1} {word[window.language].from} {this.state.exam.length}</h1>
@@ -741,50 +814,173 @@ class Test extends Component {
                     </div>
 
                     <div style={styles.examContainer}>
-                        <div style={styles.examContainerInner}>
-                            <span style={styles.question}>
-                                {this.state.exam[this.state.current] && this.state.exam[this.state.current].text}
-                            </span>
-                            <div >
-                                {(this.state.exam[this.state.current] && this.state.exam[this.state.current].media) &&
-                                    this.getMedia(this.state.exam[this.state.current].media, true)
-                                }
-                            </div>
-                            <div style={styles.answerContainer}>
-                                {this.state.exam[this.state.current] && this.state.exam[this.state.current].choices.map((c, index) => {
-                                    let timeoutOpacity = this.state.isTimeOut ? 0.5 : 1
-                                    let btnStyle = { width: '97%', backgroundColor: JSON.stringify(this.state.answer[this.state.current]) === JSON.stringify({ "qid": this.state.exam[this.state.current].qid, "cid": c.cid }) ? '#2abaf0' : '#fff', border: '2px solid #2abaf0', padding: 0, borderRadius: 30, marginTop: 10 }
-                                    return (
-                                        <div key={index} style={{ ...styles.answerBtnContainer, opacity: timeoutOpacity }}>
-                                            <div style={styles.answerContainerInner}>
-                                                <Button
-                                                    onClick={() => {
-                                                        if (JSON.stringify(this.state.answer[this.state.current]) === JSON.stringify({ "qid": this.state.exam[this.state.current].qid, "cid": c.cid })) {
-                                                            this.setState({ answer: { ...this.state.answer, [this.state.current]: undefined } })
-                                                        }
-                                                        else {
-                                                            this.setState({ answer: { ...this.state.answer, [this.state.current]: { "qid": this.state.exam[this.state.current].qid, "cid": c.cid } } })
-                                                            // if (this.state.current < this.state.exam.length - 1) {
-                                                            //     this.setState({ current: this.state.current + 1 })
-                                                            // }
-                                                            // else {
-                                                            //     this.forceUpdate()
-                                                            // }
-                                                        }
-                                                    }}
-                                                    disabled={this.state.isTimeOut}
-                                                    style={btnStyle}
-                                                >
-                                                    <span style={styles.answerTxt}>{c.text}</span>
-                                                </Button>
-                                                {c.media && this.getMedia(c.media, false)}
+
+                        {this.state.examType === 1 && false ?
+                            //choice
+                            <div style={styles.examContainerInner}>
+                                <span style={styles.question}>
+                                    {this.state.exam[this.state.current] && this.state.exam[this.state.current].text}
+                                </span>
+                                <div >
+                                    {(this.state.exam[this.state.current] && this.state.exam[this.state.current].media) &&
+                                        this.getMedia(this.state.exam[this.state.current].media, true)
+                                    }
+                                </div>
+                                <div style={styles.answerContainer}>
+                                    {this.state.exam[this.state.current] && this.state.exam[this.state.current].choices.map((c, index) => {
+                                        let timeoutOpacity = this.state.isTimeOut ? 0.5 : 1
+                                        let btnStyle = { width: '97%', backgroundColor: JSON.stringify(this.state.answer[this.state.current]) === JSON.stringify({ "qid": this.state.exam[this.state.current].qid, "cid": c.cid }) ? '#2abaf0' : '#fff', border: '2px solid #2abaf0', padding: 0, borderRadius: 30, marginTop: 10 }
+                                        return (
+                                            <div key={index} style={{ ...styles.answerBtnContainer, opacity: timeoutOpacity }}>
+                                                <div style={styles.answerContainerInner}>
+                                                    <Button
+                                                        onClick={() => {
+                                                            if (JSON.stringify(this.state.answer[this.state.current]) === JSON.stringify({ "qid": this.state.exam[this.state.current].qid, "cid": c.cid })) {
+                                                                this.setState({ answer: { ...this.state.answer, [this.state.current]: undefined } })
+                                                            }
+                                                            else {
+                                                                this.setState({ answer: { ...this.state.answer, [this.state.current]: { "qid": this.state.exam[this.state.current].qid, "cid": c.cid } } })
+                                                                // if (this.state.current < this.state.exam.length - 1) {
+                                                                //     this.setState({ current: this.state.current + 1 })
+                                                                // }
+                                                                // else {
+                                                                //     this.forceUpdate()
+                                                                // }
+                                                            }
+                                                        }}
+                                                        disabled={this.state.isTimeOut}
+                                                        style={btnStyle}
+                                                    >
+                                                        <span style={styles.answerTxt}>{c.text}</span>
+                                                    </Button>
+                                                    {c.media && this.getMedia(c.media, false)}
+                                                </div>
+                                                <div style={styles.answerContainerFullfill} />
                                             </div>
-                                            <div style={styles.answerContainerFullfill} />
-                                        </div>
-                                    )
-                                })}
+                                        )
+                                    })}
+                                </div>
                             </div>
-                        </div>
+                            :
+                            null
+                        }
+
+                        {this.state.examType === 1 && false ?
+                            //text
+                            <div style={styles.examContainerInner}>
+                                <span style={styles.question}>
+                                    {this.state.exam[this.state.current] && this.state.exam[this.state.current].text}
+                                </span>
+                                <div >
+                                    {(this.state.exam[this.state.current] && this.state.exam[this.state.current].media) &&
+                                        this.getMedia(this.state.exam[this.state.current].media, true)
+                                    }
+                                </div>
+                                <div style={styles.answerContainer}>
+                                    <Input type="textarea" name="text" id="answer" style={styles.answerTextInput} placeholder={word[window.language].answer} />
+                                </div>
+                            </div>
+                            :
+                            null
+                        }
+
+                        {this.state.examType === 1 || true ?
+                            //match and order
+                            <div style={styles.examContainerInner}>
+                                <span style={styles.question}>
+                                    {this.state.exam[this.state.current] && this.state.exam[this.state.current].text}
+                                </span>
+                                <div >
+                                    {(this.state.exam[this.state.current] && this.state.exam[this.state.current].media) &&
+                                        this.getMedia(this.state.exam[this.state.current].media, true)
+                                    }
+                                </div>
+                                <div style={{...styles.answerContainer}}>
+                                    <div style={{ display: 'flex', flexDirection: 'row', width: '100%' }}>
+                                        <div style={{ width: '50%', justifyContent: 'center' }}>
+                                            <p style={styles.text} color={'danger'}>{word[window.language].article}</p>
+                                        </div>
+                                        <div style={{ width: '50%', justifyContent: 'center' }}>
+                                            <p style={styles.text} color={'success'}>{word[window.language].answer}</p>
+                                        </div>
+                                    </div>
+                                    {matchingAnswerExp.article.map((item, index) => {
+                                        return (
+                                            <div key={index} style={{ display: 'flex', flexDirection: 'row', width: '100%' }}>
+                                                <div style={{ width: '50%', justifyContent: 'center' }}>
+                                                    <Button style={styles.matchingBtn} outline color="danger" disabled>123456798</Button>
+                                                </div>
+                                                <div style={{ width: '50%', justifyContent: 'center' }}>
+                                                    {/* <Button style={styles.matchingBtn} outline color="success">123456798</Button> */}
+                                                    <Dropdown
+                                                        isOpen={this.state.matchingDropdownOpenIndex === index}
+                                                        toggle={() => {
+                                                            this.setState({ matchingDropdownOpenIndex: this.state.matchingDropdownOpenIndex === index ? -1 : index })
+                                                        }}
+                                                    >
+                                                        <DropdownToggle caret style={styles.matchingBtn} outline color="success">
+                                                            Dropdown
+                                                        </DropdownToggle>
+                                                        <DropdownMenu style={{ width: '98%',marginBottom:'10px',marginRight:'2%' }}>
+                                                            <DropdownItem>Some Action</DropdownItem>
+                                                            <DropdownItem>Foo Action</DropdownItem>
+                                                            <DropdownItem>Bar Action</DropdownItem>
+                                                            <DropdownItem>Quo Action</DropdownItem>
+                                                        </DropdownMenu>
+                                                    </Dropdown>
+                                                </div>
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+                            </div>
+                            :
+                            null
+                        }
+
+                        {this.state.examType === 1 && false ?
+                            //video
+                            <div style={styles.examContainerInner}>
+                                <div style={{ width: '18vw', marginBottom: 20, margin: 'auto', marginTop: 0, borderRadius: 7, overflow: 'hidden' }}>
+                                    <Player
+                                        ref="player"
+                                        startTime={0}
+                                        controls
+                                        fluid
+                                        style={{ width: '18vw' }}
+                                        width={'18vw'}
+                                        height={'30vw'}
+                                        poster={'http://dev.hatyaiapp.com:11948/upload/0zxbvniigw280gaibf4u/100vohunu02dh7ntr1s1/jsk03tjx.png'}
+                                        src={'http://dev.hatyaiapp.com:11948/upload/0zxbvniigw280gaibf4u/100vohunu02dh7ntr1s1/jsk03tjx.mp4'}
+                                    />
+                                </div>
+                                <div style={styles.answerContainer}>
+
+                                </div>
+                            </div>
+                            :
+                            null
+                        }
+
+                        {this.state.examType === 1 && false ?
+                            //answer template
+                            <div style={styles.examContainerInner}>
+                                <span style={styles.question}>
+                                    {this.state.exam[this.state.current] && this.state.exam[this.state.current].text}
+                                </span>
+                                <div >
+                                    {(this.state.exam[this.state.current] && this.state.exam[this.state.current].media) &&
+                                        this.getMedia(this.state.exam[this.state.current].media, true)
+                                    }
+                                </div>
+                                <div style={styles.answerContainer}>
+
+                                </div>
+                            </div>
+                            :
+                            null
+                        }
+
                     </div>
                 </div>
 
@@ -906,6 +1102,12 @@ class Test extends Component {
             return <Redirect push to="/" />;
         }
 
+        if (!this.state.isFoundVideoRef && this.refs && this.refs.player) {
+            this.setState({ isFoundVideoRef: true }, () => {
+                this.refs.player.subscribeToStateChange(this.handleStateChange.bind(this));
+            })
+        }
+
         return (
             <div className="login loginContainer">
                 <SideNav page={'home'} />
@@ -929,6 +1131,14 @@ class Test extends Component {
                         :
                         this.quiz()
                     }
+                    <Toast style={styles.Toast} isOpen={this.state.toastData}>
+                        <ToastHeader>
+                            Warning
+                        </ToastHeader>
+                        <ToastBody>
+                            {this.state.toastData}
+                        </ToastBody>
+                    </Toast>
                     <img src={require('../image/decorate02.png')} style={styles.decorateLeft} alt={'decorate02'} />
                     <img src={require('../image/decorate01.png')} style={styles.decorateRight} alt={'decorate01'} />
                 </div>
@@ -1031,13 +1241,15 @@ const styles = {
     routerBtnIco: { width: '1.75vw', fontSize: '24px' },
     routerBtnTxt: { fontFamily: 'DBH', fontWeight: 500, color: '#fff', fontSize: '30px' },
     examContainer: { display: 'flex', flex: 1, flexDirection: 'column', backgroundColor: '#fff', margin: 10, marginTop: 0, border: '2px solid #ff5f6d', borderRadius: 10, overflow: 'hidden' },
-    examContainerInner: { overflowY: 'scroll', display: 'flex', flex: 1, flexDirection: 'column' },
+    examContainerInner: { overflowY: 'scroll', display: 'flex', flex: 1, flexDirection: 'column', marginTop: '5px' },
     question: { fontFamily: 'DBH', fontSize: '30px', fontWeight: 500, textAlign: 'left', marginLeft: 10, marginBottom: 20, color: '#1c5379' },
     answerContainer: { display: 'flex', /*flex: 1,*/ flexWrap: 'wrap', flexDirection: 'row', marginTop: 10 },
+    answerTextInput: { resize: 'none', display: 'flex', flex: 1, marginLeft: '15px', marginRight: '5px', height: '200px', marginTop: '10px', marginBottom: '10px' },
     answerBtnContainer: { width: '45%', marginBottom: 20, marginLeft: '2.5%', },
     answerContainerInner: { backgroundColor: '#eee', borderRadius: 30, paddingBottom: 10 },
     answerTxt: { fontFamily: 'DBH', fontWeight: 500, color: '#1c5379', fontSize: '30px' },
     answerContainerFullfill: { display: 'flex', flex: 1 },
+    matchingBtn: { fontFamily: 'DBH',fontSize:'25px', width: '75%', marginBottom: '20px', height: '50px', borderRadius: '25px' },
     sendingAnswerLoading: { width: '3rem', height: '3rem', margin: 'auto' },
     sendingAnswerTxt: { color: '#1c5379', fontFamily: 'DBH', fontSize: '30px', fontWeight: '500' },
     sendingAnswerWarning: { color: 'red', fontFamily: 'DBH', fontSize: '30px', fontWeight: '500', display: 'flex', flexDirection: 'row', alignItems: 'center' },
@@ -1046,8 +1258,10 @@ const styles = {
     sendAnswerBtnConfirm: { width: '50%', background: '#00adee', borderWidth: 0, padding: 0, borderRadius: 30, alignSelf: "center", paddingLeft: 15, paddingRight: 15 },
     sendAnswerBtnCancel: { width: '50%', background: 'red', borderWidth: 0, padding: 0, borderRadius: 30, alignSelf: "center", paddingLeft: 15, paddingRight: 15 },
 
-    decorateLeft: { bottom: 0, left: 0, position: 'absolute', width: '25vw' },
-    decorateRight: { bottom: 0, right: 0, position: 'absolute', width: '25vw' }
+    decorateLeft: { bottom: 0, left: 0, position: 'absolute', width: '25vw',marginLeft:'60px' },
+    decorateRight: { bottom: 0, right: 0, position: 'absolute', width: '25vw' },
+
+    Toast: { position: 'absolute' },
 }
 
 export default Test;

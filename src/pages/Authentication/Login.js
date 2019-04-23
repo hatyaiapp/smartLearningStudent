@@ -56,6 +56,7 @@ class Login extends Component {
 
     componentDidMount() {
         window.sideNav = false
+        
         fetch('http://student.questionquick.com/session/', {
             credentials: 'include'
         })

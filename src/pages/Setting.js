@@ -86,7 +86,7 @@ const styles = {
     loading: { width: '3rem', height: '3rem' },
     container: { zIndex: 2, width: '80vw', height: '80vh', backgroundColor: '#fff', alignSelf: 'center', borderRadius: 20, display: 'flex', flexDirection: 'column', overflowY: 'scroll', marginLeft: '60px' },
     topic: { color: '#ff5f6d', fontFamily: 'DBH', fontSize: '45px' },
-    decotateLeft: { bottom: 0, left: 0, position: 'absolute', width: '25vw' },
+    decotateLeft: { bottom: 0, left: 0, position: 'absolute', width: '25vw',marginLeft:'60px' },
     decotateRight: { bottom: 0, right: 0, position: 'absolute', width: '25vw' },
     box: { display: 'flex', flexDirection: 'row', justifyContent: 'space-between', marginLeft: 10, marginRight: 10, alignItems: 'center' },
     settingTopic: { fontFamily: 'DBH', fontSize: '34px' },
