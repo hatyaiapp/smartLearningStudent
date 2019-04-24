@@ -4,6 +4,7 @@ import { Button, Form, FormGroup, Input, Spinner, Alert, Fade } from 'reactstrap
 import { HashRouter as Router, Route, Link, Redirect } from "react-router-dom";
 import { faCaretRight } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import SelectSearch from 'react-select-search'
 
 let showErr;
 
@@ -32,6 +33,11 @@ let word = {
     }
 }
 
+const options = [
+    { name: 'Swedish', value: 'sv' },
+    { name: 'English', value: 'en' },
+];
+
 class CodeError extends Error {
     constructor(message, code) {
         super(message);
@@ -56,7 +62,7 @@ class Login extends Component {
 
     componentDidMount() {
         window.sideNav = false
-        
+
         fetch('http://student.questionquick.com/session/', {
             credentials: 'include'
         })
@@ -172,6 +178,18 @@ class Login extends Component {
                                     style={styles.input}
                                     name="email" id="Password" placeholder="Enter Your Password" type="password"
                                 />
+                            </FormGroup>
+                            <FormGroup style={{ ...styles.inputBox, marginTop: 20 }}>
+                                <p style={styles.inputLabel} className="label">{word[window.language].password}</p>
+                                <SelectSearch
+                                    options={options}
+                                    value="sv"
+                                    mode="input"
+                                    name="language"
+                                    placeholder="Choose your language"
+                                />
+
+                                
                             </FormGroup>
                             <Form style={styles.userTypeContainer}>
                                 {/* <FormGroup onClick={() => this.setState({ type: 'student' })} style={styles.userTypeBox}>

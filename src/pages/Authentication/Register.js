@@ -19,13 +19,14 @@ let word = {
     th: {
         signUp: 'สมัครสมาชิก',
         email: 'อีเมล',
+        studentId: 'รหัสนักเรียน/นักศึกษา',
         password: 'รหัสผ่าน',
         activateCode: 'Activate Code',
         login: 'เข้าสู่ระบบ',
         alreadyHaveCode: 'มีรหัสลงทะเบียนแล้ว',
         activated: 'ลงทะเบียน',
         name: 'ชื่อ นามสกุล',
-        
+        inviteCode: 'Invite Code',
         password: 'รหัสผ่าน',
         dontHaveCode: 'ยังไม่มีรหัสลงทะเบียน',
         registerComplete: 'สมัครสมาชิกสำเร็จ',
@@ -41,13 +42,14 @@ let word = {
     en: {
         signUp: 'Sign Up',
         email: 'E-mail Address',
+        studentId: 'Student ID',
         password: 'Password',
         activateCode: 'Activate Code',
         login: 'Sign in',
         alreadyHaveCode: 'already have activated code',
         activated: 'Activate Account',
         name: 'Name Surname',
-        
+        inviteCode: 'Invite Code',
         password: 'Password',
         dontHaveCode: "do not have activated code",
         registerComplete: 'Register Complete',
@@ -92,7 +94,7 @@ export default class Login extends Component {
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
             method: 'POST',
-            body: JSON.stringify({ 
+            body: JSON.stringify({
                 'number': this.state.email,
                 'inviteCode': this.state.inviteCode,
                 'name': this.state.name,
@@ -178,13 +180,13 @@ export default class Login extends Component {
 
     render() {
         const options = [
-            {name: 'Swedish', value: 'sv'},
-            {name: 'English', value: 'en'},
+            { name: 'Swedish', value: 'sv' },
+            { name: 'English', value: 'en' },
             {
                 type: 'group',
                 name: 'Group name',
                 items: [
-                    {name: 'Spanish', value: 'es'},
+                    { name: 'Spanish', value: 'es' },
                 ]
             },
         ];
@@ -209,12 +211,12 @@ export default class Login extends Component {
                         {this.state.registerState === 1 &&
                             <div style={styles.loginContainer}>
                                 <FormGroup style={styles.inputBox}>
-                                    <p style={styles.inputLabel} className="label">{word[window.language].email}</p>
+                                    <p style={styles.inputLabel} className="label">{word[window.language].studentId}</p>
                                     <Input
-                                        value={this.state.email}
+                                        value={this.state.studentId}
                                         onChange={(e) => this.setState({ email: e.target.value })}
                                         style={styles.input}
-                                        type="email" name="email" id="username" placeholder="Email"
+                                        type="text" name="number" id="username" placeholder="Student ID"
                                     />
                                 </FormGroup>
                                 {/* <FormGroup style={styles.inputBox}>
@@ -236,7 +238,7 @@ export default class Login extends Component {
                                         value={this.state.name}
                                         onChange={(e) => this.setState({ name: e.target.value })}
                                         style={styles.input}
-                                        type="email" name="name" id="username" placeholder="Name"
+                                        type="text" name="name" id="username" placeholder="Name"
                                     />
                                 </FormGroup>
                                 <FormGroup style={styles.inputBox}>
@@ -245,7 +247,7 @@ export default class Login extends Component {
                                         value={this.state.inviteCode}
                                         onChange={(e) => this.setState({ inviteCode: e.target.value })}
                                         style={styles.input}
-                                        type="text" name="activateCode" id="username" placeholder="Activate code"
+                                        type="text" name="activateCode" id="username" placeholder="Invite code"
                                     />
                                 </FormGroup>
                             </div>
