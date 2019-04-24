@@ -13,22 +13,26 @@ let word = {
         signIn: 'ลงชื่อเข้าสู่ระบบ',
         username: 'ชื่อผู้ใช้งาน',
         password: 'รหัสผ่าน',
+        studentId: 'รหัสนักเรียน/นักศึกษา',
         enterYourEmail: 'อีเมล',
         enterYourPassword: 'รหัสผ่าน',
         login: 'เข้าสู่ระบบ',
+        school: 'สถานศึกษา',
         signUpStudent: 'ลงทะเบียนนักเรียน',
-        err_wrongAuth: 'อีเมล หรือ รหัสผ่าน ไม่ถูกต้อง',
+        err_wrongAuth: 'อีเมล, รหัสผ่าน หรือ สถานศึกษา ไม่ถูกต้อง',
         err_notActivate: 'ยังไม่ได้ยืนยันการสมัครสมาชิกผ่านอีเมล (กรุณาตรวจสอบอีเมลที่ใช้สมัครสมาชิก)',
     },
     en: {
         signIn: 'Sign In',
         username: 'Username',
         password: 'Password',
+        studentId: 'Student ID',
         enterYourEmail: 'Enter your e-mail',
         enterYourPassword: 'Enter your password',
         login: 'Sign In',
+        school: 'School/University',
         signUpStudent: 'Sign Up',
-        err_wrongAuth: 'Invalid Email or Password',
+        err_wrongAuth: 'Invalid Email, Password or School/University',
         err_notActivate: 'Have not activated account. (Please check E-mail)',
     }
 }
@@ -57,6 +61,8 @@ class Login extends Component {
             registerPage: false,
             isShowErr: false,
             failedMsg: '',
+            school: [],
+            pickedSchool: null,
         }
     }
 
@@ -84,18 +90,38 @@ class Login extends Component {
                 this.setState({ isLoading: false })
                 console.log('error', err)
             })
+
+        fetch('http://student.questionquick.com/user/school/', {
+            credentials: 'include'
+        })
+            .then(res => res.json())
+            .then(s => {
+                for (let i = 0; i < s.length; i++) {
+                    s[i].value = s[i]['_id'];
+                    delete s[i]._id;
+                }
+                this.setState({ school: s })
+            })
+            .catch(err => {
+                this.setState({ school: [] })
+            })
     }
 
     Login() {
         console.log("username", this.state.username)
         console.log("password", this.state.password)
+        console.log("school",this.state.pickedSchool)
         this.setState({ isLoading: true }, () => {
             fetch('http://student.questionquick.com/session/',
                 {
                     credentials: 'include',
                     headers: { 'Content-Type': 'application/json' },
                     method: 'POST',
-                    body: JSON.stringify({ 'username': this.state.username })
+                    body: JSON.stringify({ 
+                        'number': this.state.username,
+                        'password': this.state.password,
+                        'school': this.state.pickedSchool && this.state.pickedSchool.value
+                    })
                 })
                 .then(res => res.json())
                 .then(e => {
@@ -162,12 +188,12 @@ class Login extends Component {
                         <p className='login-header'>{word[window.language].signIn}</p>
                         <div style={styles.loginContainer}>
                             <FormGroup style={styles.inputBox}>
-                                <p style={styles.inputLabel} className="label">{word[window.language].username}</p>
+                                <p style={styles.inputLabel} className="label">{word[window.language].studentId}</p>
                                 <Input
                                     value={this.state.username}
                                     onChange={(e) => this.setState({ username: e.target.value })}
                                     style={styles.input}
-                                    type="email" name="email" id="username" placeholder="Enter Your Username"
+                                    type="text" name="email" id="username" placeholder="Enter Your Student ID"
                                 />
                             </FormGroup>
                             <FormGroup style={{ ...styles.inputBox, marginTop: 20 }}>
@@ -180,16 +206,17 @@ class Login extends Component {
                                 />
                             </FormGroup>
                             <FormGroup style={{ ...styles.inputBox, marginTop: 20 }}>
-                                <p style={styles.inputLabel} className="label">{word[window.language].password}</p>
+                                <p style={styles.inputLabel} className="label">{word[window.language].school}</p>
                                 <SelectSearch
-                                    options={options}
-                                    value="sv"
+                                    options={this.state.school}
+                                    onChange={(e) => this.setState({pickedSchool:e})}
+                                    value={this.state.pickedSchool && this.state.pickedSchool.value}
                                     mode="input"
                                     name="language"
                                     placeholder="Choose your language"
                                 />
 
-                                
+
                             </FormGroup>
                             <Form style={styles.userTypeContainer}>
                                 {/* <FormGroup onClick={() => this.setState({ type: 'student' })} style={styles.userTypeBox}>
@@ -231,7 +258,7 @@ class Login extends Component {
 }
 
 let styles = {
-    loadingContainer: { display: 'flex', flex: 1, backgroundColor: '#000', opacity: '0.5', position: 'absolute', width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center' },
+    loadingContainer: { display: 'flex', flex: 1, backgroundColor: '#000', opacity: '0.5', position: 'absolute',zIndex:101, width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center' },
     loading: { width: '3rem', height: '3rem' },
     loginBox: { width: '85vw', height: '85vh', backgroundColor: '#fff', alignSelf: 'center', borderRadius: 20, display: 'flex', flexDirection: 'column', overflowY: 'scroll' },
     loginContainer: { display: 'flex', flex: 1, flexDirection: 'column', alignItems: 'center' },

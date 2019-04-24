@@ -3,6 +3,7 @@ import '../App.css';
 import { Button, Modal, ModalHeader, ModalBody, ModalFooter, Spinner } from 'reactstrap';
 import '@trendmicro/react-sidenav/dist/react-sidenav.css';
 import SideNav from '../_component/sideNav'
+import { BrowserRouter as Router, Route, Link, Redirect } from "react-router-dom";
 
 class CodeError extends Error {
     constructor(message, code) {
@@ -25,15 +26,29 @@ export default class Setting extends Component {
         super();
         this.state = {
             goUserPage: false,
-            goTestPage: false
+            goTestPage: false,
+            redirectHome:false,
         }
     }
 
     componentDidMount() {
-
+        fetch('http://student.questionquick.com/user/',
+            {
+                credentials: 'include',
+            })
+            .then(res => res.json())
+            .then(e => {
+                if (e.message === 'Not Login') {
+                    this.setState({ redirectHome: true })
+                }
+            })
     }
 
     render() {
+        if (this.state.redirectHome) {
+            return <Redirect push to="/" />;
+        }
+        
         return (
             <div className="login loginContainer">
                 <SideNav page={'setting'} />
@@ -86,7 +101,7 @@ const styles = {
     loading: { width: '3rem', height: '3rem' },
     container: { zIndex: 2, width: '80vw', height: '80vh', backgroundColor: '#fff', alignSelf: 'center', borderRadius: 20, display: 'flex', flexDirection: 'column', overflowY: 'scroll', marginLeft: '60px' },
     topic: { color: '#ff5f6d', fontFamily: 'DBH', fontSize: '45px' },
-    decotateLeft: { bottom: 0, left: 0, position: 'absolute', width: '25vw',marginLeft:'60px' },
+    decotateLeft: { bottom: 0, left: 0, position: 'absolute', width: '25vw', marginLeft: '60px' },
     decotateRight: { bottom: 0, right: 0, position: 'absolute', width: '25vw' },
     box: { display: 'flex', flexDirection: 'row', justifyContent: 'space-between', marginLeft: 10, marginRight: 10, alignItems: 'center' },
     settingTopic: { fontFamily: 'DBH', fontSize: '34px' },

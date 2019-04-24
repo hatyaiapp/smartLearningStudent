@@ -284,8 +284,6 @@ class Test extends Component {
     }
 
     onFocus(_this) {
-        console.log('focus', _this)
-        // let _this = this
         _this.setState({ toastData: 'focus' }, () => {
             setTimeout(function () {
                 _this.setState({ toastData: '' })
@@ -314,7 +312,6 @@ class Test extends Component {
     }
 
     handleVisibilityChange(_this) {
-        console.log('handleVisibilityChange')
         if (document[hidden]) {
             console.log('change tab')
             _this.setState({ toastData: 'focus' }, () => {
@@ -325,7 +322,6 @@ class Test extends Component {
             // alert(1)
             // this.setState({ actions: [...this.state.actions, 'hide'] });
         } else {
-            console.log('back from other tab')
             _this.setState({ toastData: 'focus' }, () => {
                 setTimeout(function () {
                     _this.setState({ toastData: 'back from other tab' })
@@ -361,7 +357,7 @@ class Test extends Component {
                     let response = resp[0]
                     let e = resp[1]
 
-                    /*if (e.message === 'Already test') {
+                    if (e.message === 'Already test') {
                         alert('คุณได้ทำข้อสอบชุดนี้แล้ว')
                         this.setState({ isLoading: false })
                     }
@@ -376,14 +372,14 @@ class Test extends Component {
                                 this.decrementClock();
                             }, 1000);
                         })
-                    }*/
+                    }
 
                     // test
-                    this.setState({ isStart: true, isLoading: false, startExamModal: false, answersheet: e }, () => {
-                        this.clockCall = setInterval(() => {
-                            this.decrementClock();
-                        }, 1000);
-                    })
+                    // this.setState({ isStart: true, isLoading: false, startExamModal: false, answersheet: e }, () => {
+                    //     this.clockCall = setInterval(() => {
+                    //         this.decrementClock();
+                    //     }, 1000);
+                    // })
                 })
                 .catch(err => {
                     this.setState({ isLoading: false }, () => alert(err.message))
@@ -551,20 +547,22 @@ class Test extends Component {
         let data = this.state.qstn[arrIndex1].quizevents[arrIndex2]
         console.log(item, data, arrIndex1, arrIndex2)
         this.setState({ isFetchingExam: true, startExamModal: true }, () => {
-            fetch('http://student.questionquick.com/exam/' + data.exam._id + '/questions',
-                {
-                    credentials: 'include',
-                })
-                .then(res => res.json())
-                .then(exam => {
-                    console.log('exam data', exam, data, item)
-                    this.setState({ /*: false,*/ exam, pickedQuiz: item, pickedQuizData: data, fullTimer: data.duration, timer: data.duration * 60 })
-                })
-                .catch(e => {
-                    console.log(e)
-                    //this.setState({ isLoading: false })
-                    this.setState({ isFetchingExam: false })
-                })
+            if (data.exam) {
+                fetch('http://student.questionquick.com/exam/' + data.exam._id + '/questions',
+                    {
+                        credentials: 'include',
+                    })
+                    .then(res => res.json())
+                    .then(exam => {
+                        console.log('exam data', exam, data, item)
+                        this.setState({ /*: false,*/ exam, pickedQuiz: item, pickedQuizData: data, fullTimer: data.duration, timer: data.duration * 60 })
+                    })
+                    .catch(e => {
+                        console.log(e)
+                        //this.setState({ isLoading: false })
+                        this.setState({ isFetchingExam: false })
+                    })
+            }
         })
     }
 
@@ -827,7 +825,7 @@ class Test extends Component {
 
                     <div style={styles.examContainer}>
 
-                        {this.state.examType === 1 && false ?
+                        {this.state.exam[this.state.current] && this.state.exam[this.state.current].choices && this.state.exam[this.state.current].choices.length > 0 ?
                             //choice
                             <div style={styles.examContainerInner}>
                                 <span style={styles.question}>
@@ -877,7 +875,7 @@ class Test extends Component {
                             null
                         }
 
-                        {this.state.examType === 1 && false ?
+                        {this.state.exam[this.state.current] && this.state.exam[this.state.current].choices && this.state.exam[this.state.current].choices.length === 0 ?
                             //text
                             <div style={styles.examContainerInner}>
                                 <span style={styles.question}>
@@ -889,7 +887,30 @@ class Test extends Component {
                                     }
                                 </div>
                                 <div style={styles.answerContainer}>
-                                    <Input type="textarea" name="text" id="answer" style={styles.answerTextInput} placeholder={word[window.language].answer} />
+                                    <Input
+                                        type="textarea"
+                                        name="text"
+                                        id="answer"
+                                        disabled={this.state.isTimeOut}
+                                        style={styles.answerTextInput}
+                                        placeholder={word[window.language].answer}
+                                        value={this.state.answer[this.state.current] ? this.state.answer[this.state.current].text : ''}
+                                        onChange={(e) => {
+                                            if (!this.state.answer[this.state.current]) {
+                                                this.state.answer[this.state.current] = {}
+                                                this.state.answer[this.state.current].qid = this.state.exam[this.state.current].qid
+                                                // this.setState({ answer: { ...this.state.answer, [this.state.current]: { "qid": this.state.exam[this.state.current].qid, "cid": c.cid } } })
+                                            }
+                                            if (e.target.value) {
+                                                this.state.answer[this.state.current].text = e.target.value
+                                            }
+                                            else {
+                                                this.state.answer[this.state.current] = undefined
+                                            }
+
+                                            this.forceUpdate()
+                                        }}
+                                    />
                                 </div>
                             </div>
                             :
@@ -992,7 +1013,7 @@ class Test extends Component {
                             null
                         }
 
-                        {this.state.examType === 1 || true ?
+                        {this.state.examType === 1 && false ?
                             //voting
                             <div style={styles.examContainerInner}>
                                 <span style={styles.question}>
@@ -1073,7 +1094,7 @@ class Test extends Component {
                         <Button disabled={this.state.isSendingAnswer} onClick={() => this.submit()} style={styles.sendAnswerBtnConfirm}>
                             <span style={styles.sendAnswerBtnTxt}>{word[window.language].confirm}</span>
                         </Button>
-                        <Button disabled={this.state.isSendingAnswer} onClick={() => this.setState({ modal: false })} style={styles.sendAnswerBtnCancel}>
+                        <Button disabled={this.state.isSendingAnswer} onClick={() => this.setState({ modal: false }, () => this.getAnswerData())} style={styles.sendAnswerBtnCancel}>
                             <span style={styles.sendAnswerBtnTxt}>{word[window.language].cancel}</span>
                         </Button>
                     </ModalFooter>
@@ -1121,6 +1142,13 @@ class Test extends Component {
         )
     }
 
+    getAnswerData() {
+        console.log('vvvvvvvvvvvvvvvvvvvv answer data vvvvvvvvvvvvvvvvvvvv')
+        console.log('answer', this.state.answer)
+        console.log('answersheet', this.state.answersheet)
+        console.log('^^^^^^^^^^^^^^^^^^^^ answer data ^^^^^^^^^^^^^^^^^^^^')
+    }
+
     startExamModal() {
         if (!this.state.pickedQuiz) {
             return null
@@ -1135,7 +1163,7 @@ class Test extends Component {
                 <ModalBody>
                     <p style={styles.quizDetailTxt2}>({this.state.pickedQuiz.code})</p>
                     <span style={styles.quizDetailTxt3}>
-                    <span style={styles.quizDetailTopic1}>{word[window.language].teacher}: </span>{this.state.pickedQuiz.teacher && this.state.pickedQuiz.teacher.name}</span>
+                        <span style={styles.quizDetailTopic1}>{word[window.language].teacher}: </span>{this.state.pickedQuiz.teacher && this.state.pickedQuiz.teacher.name}</span>
                     <div style={styles.quizDetailDescBox}>
                         <span style={styles.quizDetailTxt4}>{word[window.language].questionAmount}: <span style={styles.quizDetailTopic2}>{this.state.exam.length}</span></span>
                         <span style={styles.quizDetailTxt4}>{word[window.language].duration}: <span style={styles.quizDetailTopic2}>{this.getDurationTxt(this.state.pickedQuizData.duration)}</span></span>

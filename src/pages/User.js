@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import '../App.css';
 import { Button, Modal, ModalHeader, ModalBody, ModalFooter, Spinner, Media } from 'reactstrap';
+import { BrowserRouter as Router, Route, Link, Redirect } from "react-router-dom";
 import '@trendmicro/react-sidenav/dist/react-sidenav.css';
 import SideNav from '../_component/sideNav'
 
@@ -14,9 +15,9 @@ let word = {
         m: 'ม.',
         stopExam: 'หยุดทำข้อสอบ',
         confirmStopExamTxt: 'คุณต้องการยกเลิกการทำข้อสอบหรือไม่ ข้อมูลข้อสอบชุดนี้จะถูกบันทึกว่า "ไม่ได้ทำการส่งข้อสอบ"',
-        uploadImg:'อัพโหลดรูปภาพ',
+        uploadImg: 'อัพโหลดรูปภาพ',
         cancel: 'ยกเลิก',
-        save:'บันทึก'
+        save: 'บันทึก'
     },
     en: {
         personalInfo: 'Personal Infomation',
@@ -27,9 +28,9 @@ let word = {
         m: 'M.',
         stopExam: 'Stop exam',
         confirmStopExamTxt: 'Do you want to cancel the exam? This Answersheet will be recorded as "Did not send the answers"',
-        uploadImg:'Upload',
+        uploadImg: 'Upload',
         cancel: 'Cancel',
-        save:'Save'
+        save: 'Save'
     }
 }
 
@@ -67,7 +68,12 @@ export default class User extends Component {
             .then(res => res.json())
             .then(user => {
                 console.log("user", user)
-                this.setState({ isLoading: false, user, editedName: user.name })
+                if (user.message === 'Not Login') {
+                    this.setState({ redirectHome: true })
+                }
+                else {
+                    this.setState({ isLoading: false, user, editedName: user.name })
+                }
             })
     }
 
@@ -87,14 +93,18 @@ export default class User extends Component {
         }
     }
 
-    isEdited(){
-        if(this.state.file || this.state.user.name !== this.state.editedName){
+    isEdited() {
+        if (this.state.file || this.state.user.name !== this.state.editedName) {
             return true
         }
         return false
     }
 
     render() {
+        if (this.state.redirectHome) {
+            return <Redirect push to="/" />;
+        }
+
         return (
             <div className="login loginContainer">
                 <SideNav page={'user'} />
@@ -167,18 +177,18 @@ export default class User extends Component {
 const styles = {
     spinnerContainer: { display: 'flex', flex: 1, backgroundColor: '#000', opacity: '0.5', position: 'absolute', width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center', zIndex: 10 },
     spinner: { width: '3rem', height: '3rem' },
-    container: { zIndex: 2, position: 'static', width: '80vw', height: '80vh', backgroundColor: '#fff', alignSelf: 'center', borderRadius: 20, display: 'flex', flexDirection: 'column', overflowY: 'scroll',marginLeft:'60px' },
-    text: {fontFamily: 'DBH',},
+    container: { zIndex: 2, position: 'static', width: '80vw', height: '80vh', backgroundColor: '#fff', alignSelf: 'center', borderRadius: 20, display: 'flex', flexDirection: 'column', overflowY: 'scroll', marginLeft: '60px' },
+    text: { fontFamily: 'DBH', },
     topicTxt: { color: '#ff5f6d', fontFamily: 'DBH', fontSize: '45px' },
     detailTxt: { color: '#222', fontFamily: 'DBH', fontSize: '30px', alignSelf: 'flex-start', marginLeft: 20 },
     detailTxtEditBtn: { width: '30px', height: '30px', borderWidth: '0px', borderStyle: 'solid', backgroundColor: 'gold', borderRadius: '15px', cursor: 'pointer', marginLeft: '10px', display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '15px' },
     detailTxtBox: { display: 'flex', flexDirection: 'row', alignItems: 'center', marginTop: '35px' },
     detailTopic: { color: '#999' },
-    decorateLeft: { bottom: 0, left: 0, position: 'absolute', width: '25vw',marginLeft:'60px' },
+    decorateLeft: { bottom: 0, left: 0, position: 'absolute', width: '25vw', marginLeft: '60px' },
     decorateRight: { bottom: 0, right: 0, position: 'absolute', width: '25vw' },
     userImgBox: { display: 'flex', width: '100px', height: '100px', marginLeft: 'auto', marginRight: 'auto', },
     userImg: { width: '100px', height: '100px', borderRadius: '50px' },
-    uploadImgBtn: {width:'100px',marginLeft:'auto',marginRight:'auto',marginTop:'5px',borderRadius:'10px',cursor:'pointer'},
+    uploadImgBtn: { width: '100px', marginLeft: 'auto', marginRight: 'auto', marginTop: '5px', borderRadius: '10px', cursor: 'pointer' },
     ico: { fontSize: '1em', margin: '0px' },
-    saveBtn:{marginBottom:'20px',marginTop:'auto',marginLeft:'20px',marginRight:'10px'},
+    saveBtn: { marginBottom: '20px', marginTop: 'auto', marginLeft: '20px', marginRight: '10px' },
 }

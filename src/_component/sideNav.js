@@ -43,7 +43,8 @@ export default class Setting extends Component {
             goTestPage: false,
             goSettingPage: false,
 
-            quizModal: false
+            quizModal: false,
+            navAct: null,
         }
     }
 
@@ -73,7 +74,7 @@ export default class Setting extends Component {
 
     navigate(act, warning) {
         if (warning && act !== 'goTestPage') {
-            this.setState({ quizModal: true })
+            this.setState({ quizModal: true, navAct: act })
         }
         else {
             this.setState({ [act]: true })
@@ -88,7 +89,7 @@ export default class Setting extends Component {
                     {word[global.language].stopExamWarning}
                 </ModalBody>
                 <ModalFooter>
-                    <Button color="danger" onClick={() => this.setState({ quizModal: false }, () => this.setState({ [act]: true }))}>{word[window.language].stopExam}</Button>{' '}
+                    <Button color="danger" onClick={() => this.setState({ quizModal: false }, () => { this.setState({ [this.state.navAct]: true }) })}>{word[window.language].stopExam}</Button>{' '}
                     <Button color="secondary" onClick={() => this.setState({ quizModal: false/*, isStart: true, quitConfirmed: false*/ })}>{word[window.language].cancel}</Button>
                 </ModalFooter>
             </Modal>

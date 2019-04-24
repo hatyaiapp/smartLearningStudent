@@ -76,7 +76,7 @@ export default class Login extends Component {
             email: '',
             registerState: 1,
             activatecode: '',
-            invitecode: '',
+            inviteCode: '',
             name: '',
             password: '',
             registerComplete: false
@@ -84,7 +84,7 @@ export default class Login extends Component {
     }
 
     componentDidMount() {
-        this.setState({ activatecode: this.props.ac, registerState: this.props.ac ? 2 : 1 })
+        this.setState({ inviteCode: this.props.ac || '', registerState: /*this.props.ac ? 2 :*/ 1 })
     }
 
     SendEmail() {
@@ -179,18 +179,6 @@ export default class Login extends Component {
     }
 
     render() {
-        const options = [
-            { name: 'Swedish', value: 'sv' },
-            { name: 'English', value: 'en' },
-            {
-                type: 'group',
-                name: 'Group name',
-                items: [
-                    { name: 'Spanish', value: 'es' },
-                ]
-            },
-        ];
-
         if (this.state.backToLogin) {
             return <Redirect to="/" />
         }
@@ -216,7 +204,7 @@ export default class Login extends Component {
                                         value={this.state.studentId}
                                         onChange={(e) => this.setState({ email: e.target.value })}
                                         style={styles.input}
-                                        type="text" name="number" id="username" placeholder="Student ID"
+                                        type="text" name="number" id="number" placeholder="Student ID"
                                     />
                                 </FormGroup>
                                 {/* <FormGroup style={styles.inputBox}>
@@ -229,7 +217,7 @@ export default class Login extends Component {
                                         value={this.state.password}
                                         onChange={(e) => this.setState({ password: e.target.value })}
                                         style={styles.input}
-                                        type="password" name="password" id="username" placeholder="Password"
+                                        type="password" name="password" id="password" placeholder="Password"
                                     />
                                 </FormGroup>
                                 <FormGroup style={styles.inputBox}>
@@ -238,7 +226,7 @@ export default class Login extends Component {
                                         value={this.state.name}
                                         onChange={(e) => this.setState({ name: e.target.value })}
                                         style={styles.input}
-                                        type="text" name="name" id="username" placeholder="Name"
+                                        type="text" name="name" id="name" placeholder="Name"
                                     />
                                 </FormGroup>
                                 <FormGroup style={styles.inputBox}>
@@ -247,13 +235,13 @@ export default class Login extends Component {
                                         value={this.state.inviteCode}
                                         onChange={(e) => this.setState({ inviteCode: e.target.value })}
                                         style={styles.input}
-                                        type="text" name="activateCode" id="username" placeholder="Invite code"
+                                        type="text" name="activateCode" id="activateCode" placeholder="Invite code"
                                     />
                                 </FormGroup>
                             </div>
                         }
 
-                        {this.state.registerState === 2 &&
+                        {/* {this.state.registerState === 2 &&
                             <div style={styles.loginContainer}>
                                 <FormGroup style={styles.inputBox}>
                                     <p style={styles.inputLabel} className="label">Activate Code</p>
@@ -292,7 +280,7 @@ export default class Login extends Component {
                                     />
                                 </FormGroup>
                             </div>
-                        }
+                        } */}
 
                         <Fade in={this.state.isShowErr} style={styles.errAlert} tag="h5" className="mt-3">
                             <span style={styles.errorTxt}>{this.state.failedMsg}</span>
@@ -325,16 +313,16 @@ export default class Login extends Component {
                 <Modal isOpen={this.state.registerComplete}>
                     <ModalBody>
                         <p style={styles.ModalHeader}>{word[window.language].registerComplete}</p>
-                        <span style={styles.text}>{word[window.language].checkEmailGetCode}</span>
+                        <span style={styles.text}>{word[window.language].activatedComplete}</span>
                     </ModalBody>
                     <ModalFooter>
-                        <Button style={styles.ModalBtnTxt} color="success" onClick={() => this.setState({ /*registerState: 2,*/ registerComplete: false })}>{word[window.language].ok}</Button>
+                        <Button style={styles.ModalBtnTxt} color="success" onClick={() => this.setState({ /*registerState: 2,*/ registerComplete: false }, () => this.setState({ backToLogin: true }))}>{word[window.language].ok}</Button>
                     </ModalFooter>
                 </Modal>
 
                 <Modal isOpen={this.state.activateComplete}>
                     <ModalBody>
-                        <span style={styles.ModalHeader}>{word[window.language].activateComplete}</span>
+                        <span style={styles.ModalHeader}>{word[window.language].activatedComplete}</span>
                     </ModalBody>
                     <ModalFooter>
                         <Button style={styles.ModalBtnTxt} color="success" onClick={() => this.setState({ backToLogin: true })}>{word[window.language].ok}</Button>

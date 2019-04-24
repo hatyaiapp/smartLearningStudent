@@ -139,7 +139,6 @@
 
 
 /* search selact*/
-/*    input: { fontFamily: 'DBH', fontWeight: "500", fontSize: '30px' },*/
 .select-search-box {
   width: '100%';
   position: relative;
@@ -147,7 +146,7 @@
   background: #fff;
   border-radius: 4px;
   border-width: 1px;
-  border-color: black;
+  border-color: #c8c8c8;
   border-style: solid;
 }
 
@@ -189,14 +188,15 @@
 .select-search-box__search {
   display: block;
   width: 100%;
-  height: 50px;
+  height: 60px;
   border: none;
   background: none;
   outline: none;
   font-family: 'DBH';
-  font-size: 16px;
-  padding: 0 20px;
-  color: #222f3e;
+  font-size: 30px;
+  font-weight: 500;
+  padding: 0 10px;
+  color: #666;
   -webkit-appearance: none;
   box-sizing: border-box;
   position: relative;
@@ -204,7 +204,7 @@
   cursor: pointer;
   /* font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; */
   line-height: 50px;
-  box-shadow: 0 7px 14px 0 rgba(50, 50, 93, 0.1), 0 3px 6px 0 rgba(0, 0, 0, 0.07);
+  /* box-shadow: 0 7px 14px 0 rgba(50, 50, 93, 0.1), 0 3px 6px 0 rgba(0, 0, 0, 0.07); */
 }
 
 input.select-search-box__search {
@@ -225,31 +225,31 @@ input.select-search-box__search {
 
 .select-search-box__search--placeholder {
   font-style: italic;
-  font-weight: normal;
+  font-weight: 500;
 }
 
 .select-search-box input::-webkit-input-placeholder {
   color: #ccc;
-  font-style: italic;
-  font-weight: normal;
+  /* font-style: italic; */
+  font-weight: 500;
 }
 
 .select-search-box input::-moz-placeholder {
   color: #ccc;
   font-style: italic;
-  font-weight: normal;
+  font-weight: 500;
 }
 
 .select-search-box input:-moz-placeholder {
   color: #ccc;
   font-style: italic;
-  font-weight: normal;
+  font-weight: 500;
 }
 
 .select-search-box input:-ms-input-placeholder {
   color: #ccc;
   font-style: italic;
-  font-weight: normal;
+  font-weight: 500;
 }
 
 input[type='search']::-webkit-search-cancel-button, input[type='search']::-webkit-search-decoration {
@@ -284,7 +284,8 @@ input[type='search']::-webkit-search-cancel-button, input[type='search']::-webki
 
 .select-search-box__option {
   font-size: 16px;
-  font-weight: 400;
+  font-weight: 500;
+  width: 96%;
   color: #616b74;
   padding: 15px 20px;
   border-top: 1px solid #eee;
