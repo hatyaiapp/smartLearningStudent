@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import '../App.css';
-import { Button, Modal, ModalHeader, ModalBody, ModalFooter, UncontrolledCollapse, Spinner, CustomInput, Collapse, Toast, ToastHeader, ToastBody, Input, Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
+import { Button, Modal, ModalHeader, ModalBody, ModalFooter, UncontrolledCollapse, Spinner, CustomInput, Collapse, Toast, ToastHeader, ToastBody, Input, Dropdown, DropdownToggle, DropdownMenu, DropdownItem, Progress } from 'reactstrap';
 import { faUser, faClock, faFileAlt, faCalendarAlt, faCaretRight, faCaretLeft, faExclamationCircle, faInfoCircle, faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Player } from 'video-react';
@@ -12,22 +12,32 @@ import '@trendmicro/react-sidenav/dist/react-sidenav.css';
 
 var matchingAnswerExp = {
     article: [
-        { id: 'QWERT', value: 'ant' },
-        { id: 'YUIOP', value: 'bird' },
-        { id: 'ASDFG', value: 'cat' },
-        { id: 'HJKLZ', value: 'dog' },
-        { id: 'XCVBN', value: 'elephant' },
-        { id: 'QAZWS', value: 'fox' },
+        { _id: 'QWERT', value: 'ant' },
+        { _id: 'YUIOP', value: 'bird' },
+        { _id: 'ASDFG', value: 'cat' },
+        { _id: 'HJKLZ', value: 'dog' },
+        { _id: 'XCVBN', value: 'elephant' },
+        { _id: 'QAZWS', value: 'fox' },
     ],
     answer: [
-        { id: 'TGBYH', value: 'b' },
-        { id: 'HFRDS', value: 'e' },
-        { id: 'IHDWC', value: 'a' },
-        { id: 'AEFOK', value: 'd' },
-        { id: 'MKGTS', value: 'f' },
-        { id: 'RUSCV', value: 'c' },
+        { _id: 'TGBYH', value: 'b' },
+        { _id: 'HFRDS', value: 'e' },
+        { _id: 'IHDWC', value: 'a' },
+        { _id: 'AEFOK', value: 'd' },
+        { _id: 'MKGTS', value: 'f' },
+        { _id: 'RUSCV', value: 'c' },
     ]
 }
+
+let votingData = [
+    { _id: 'QTSHCM', value: 'John', amount: 10 },
+    { _id: 'RTJKYC', value: 'Daenerys', amount: 8 },
+    { _id: 'ACRGSZ', value: 'Cersei', amount: 2 },
+    { _id: 'KOLCXS', value: 'Night King', amount: 14 },
+    { _id: 'ERVMJI', value: 'Bran', amount: 28 },
+    { _id: 'XFDFXX', value: 'Tyrion', amount: 6 },
+    { _id: 'ISDFCVG', value: 'Holdor', amount: 0 },
+]
 
 var subjectCode = [
     { code: 'thai', th: 'ภาษาไทย', en: 'Thai' },
@@ -165,7 +175,9 @@ class Test extends Component {
             toastData: '',
             isFoundVideoRef: false,
             latestVideoIndex: 0,
-            matchingDropdownOpenIndex: -1
+            matchingDropdownOpenIndex: -1,
+            matchingAnswer: JSON.parse(JSON.stringify(matchingAnswerExp.article)),
+            votedId: null,
         }
     }
 
@@ -884,7 +896,7 @@ class Test extends Component {
                             null
                         }
 
-                        {this.state.examType === 1 || true ?
+                        {this.state.examType === 1 && false ?
                             //match and order
                             <div style={styles.examContainerInner}>
                                 <span style={styles.question}>
@@ -895,7 +907,7 @@ class Test extends Component {
                                         this.getMedia(this.state.exam[this.state.current].media, true)
                                     }
                                 </div>
-                                <div style={{...styles.answerContainer}}>
+                                <div style={{ ...styles.answerContainer }}>
                                     <div style={{ display: 'flex', flexDirection: 'row', width: '100%' }}>
                                         <div style={{ width: '50%', justifyContent: 'center' }}>
                                             <p style={styles.text} color={'danger'}>{word[window.language].article}</p>
@@ -908,7 +920,7 @@ class Test extends Component {
                                         return (
                                             <div key={index} style={{ display: 'flex', flexDirection: 'row', width: '100%' }}>
                                                 <div style={{ width: '50%', justifyContent: 'center' }}>
-                                                    <Button style={styles.matchingBtn} outline color="danger" disabled>123456798</Button>
+                                                    <Button style={styles.matchingBtn} outline color="danger" disabled>{item.value}</Button>
                                                 </div>
                                                 <div style={{ width: '50%', justifyContent: 'center' }}>
                                                     {/* <Button style={styles.matchingBtn} outline color="success">123456798</Button> */}
@@ -918,14 +930,32 @@ class Test extends Component {
                                                             this.setState({ matchingDropdownOpenIndex: this.state.matchingDropdownOpenIndex === index ? -1 : index })
                                                         }}
                                                     >
-                                                        <DropdownToggle caret style={styles.matchingBtn} outline color="success">
-                                                            Dropdown
+                                                        <DropdownToggle style={{ ...styles.matchingBtn, color: !this.state.matchingAnswer[index].answer ? '#ccc' : 'green' }} outline color="success">
+                                                            {this.state.matchingAnswer[index].answer ? this.state.matchingAnswer[index].answer.value : '-'}
                                                         </DropdownToggle>
-                                                        <DropdownMenu style={{ width: '98%',marginBottom:'10px',marginRight:'2%' }}>
-                                                            <DropdownItem>Some Action</DropdownItem>
-                                                            <DropdownItem>Foo Action</DropdownItem>
-                                                            <DropdownItem>Bar Action</DropdownItem>
-                                                            <DropdownItem>Quo Action</DropdownItem>
+                                                        <DropdownMenu style={{ width: '98%', marginBottom: '10px', marginRight: '2%' }}>
+                                                            {matchingAnswerExp.answer.map((item_a, index_a) => {
+                                                                return (
+                                                                    <DropdownItem
+                                                                        key={index_a}
+                                                                        onClick={() => {
+                                                                            this.state.matchingAnswer[index].answer = item_a
+                                                                            // this.forceUpdate()
+                                                                        }}
+                                                                        style={{ textAlign: 'center' }}
+                                                                    >
+                                                                        {item_a.value}
+                                                                    </DropdownItem>
+                                                                )
+                                                            })}
+                                                            <DropdownItem
+                                                                onClick={() => {
+                                                                    this.state.matchingAnswer[index].answer = null
+                                                                }}
+                                                                style={{ textAlign: 'center' }}
+                                                            >
+                                                                -
+                                                            </DropdownItem>
                                                         </DropdownMenu>
                                                     </Dropdown>
                                                 </div>
@@ -956,6 +986,44 @@ class Test extends Component {
                                 </div>
                                 <div style={styles.answerContainer}>
 
+                                </div>
+                            </div>
+                            :
+                            null
+                        }
+
+                        {this.state.examType === 1 || true ?
+                            //voting
+                            <div style={styles.examContainerInner}>
+                                <span style={styles.question}>
+                                    {this.state.exam[this.state.current] && this.state.exam[this.state.current].text}
+                                </span>
+                                <div >
+                                    {(this.state.exam[this.state.current] && this.state.exam[this.state.current].media) &&
+                                        this.getMedia(this.state.exam[this.state.current].media, true)
+                                    }
+                                </div>
+                                <div style={{ ...styles.answerContainer, display: 'flex', flexDirection: 'column', marginLeft: '10px', marginRight: '10px' }}>
+                                    {votingData.map((item, index) => {
+                                        return (
+                                            <div key={index} style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', marginBottom: '5px' }}>
+                                                <Button
+                                                    outline={this.state.votedId && this.state.votedId === item._id ? false : true}
+                                                    color={this.getDefaultColor(index)}
+                                                    style={{ width: '200px', marginRight: '5px', height: '50px' }}
+                                                    onClick={() => this.setState({ votedId: item._id })}
+                                                    disabled={this.state.votedId && this.state.votedId !== item._id ? true : false}
+                                                >
+                                                    {item.value}
+                                                </Button>
+                                                <Progress multi style={{ width: '100%', height: '50px' }}>
+                                                    <Progress bar animated color={this.getDefaultColor(index)} value={this.getBarValue(item.amount, votingData)}>
+                                                        <span style={{ marginLeft: '10px' }}>{item.amount + ' (' + this.getPercentValue(item.amount, votingData).toFixed(2) + '%)'} </span>
+                                                    </Progress>
+                                                </Progress>
+                                            </div>
+                                        )
+                                    })}
                                 </div>
                             </div>
                             :
@@ -1014,6 +1082,30 @@ class Test extends Component {
         )
     }
 
+    getDefaultColor(i) {
+        let color = ['primary', 'secondary', 'success', 'info', 'warning', 'danger']
+        return color[i % 6]
+    }
+
+    getBarValue(a, data_) {
+        // console.log('1082',a, data)
+        let data = JSON.parse(JSON.stringify(data_))
+        // if(this.state.votedId){
+        //     data.find(d => {return d._id === this.state.votedId}).amount += 1
+        // }
+        let max = Math.max.apply(Math, data.map(function (o) { return o.amount; }))
+        return a / max * 100
+    }
+
+    getPercentValue(a, data_) {
+        let data = JSON.parse(JSON.stringify(data_))
+        // if(this.state.votedId){
+        //     data.find(d => {return d._id === this.state.votedId}).amount += 1
+        // }
+        let sum = data.reduce((a, b) => +a + +b.amount, 0);
+        return a / sum * 100
+    }
+
     stopQuizModal() {
         return (
             <Modal isOpen={this.state.quizModal} toggle={() => this.setState({ quizModal: false })}>
@@ -1042,7 +1134,8 @@ class Test extends Component {
                 </ModalHeader>
                 <ModalBody>
                     <p style={styles.quizDetailTxt2}>({this.state.pickedQuiz.code})</p>
-                    <span style={styles.quizDetailTxt3}><span style={styles.quizDetailTopic1}>{word[window.language].teacher}: </span>{this.state.pickedQuiz.teacher.name}</span>
+                    <span style={styles.quizDetailTxt3}>
+                    <span style={styles.quizDetailTopic1}>{word[window.language].teacher}: </span>{this.state.pickedQuiz.teacher && this.state.pickedQuiz.teacher.name}</span>
                     <div style={styles.quizDetailDescBox}>
                         <span style={styles.quizDetailTxt4}>{word[window.language].questionAmount}: <span style={styles.quizDetailTopic2}>{this.state.exam.length}</span></span>
                         <span style={styles.quizDetailTxt4}>{word[window.language].duration}: <span style={styles.quizDetailTopic2}>{this.getDurationTxt(this.state.pickedQuizData.duration)}</span></span>
@@ -1110,7 +1203,7 @@ class Test extends Component {
 
         return (
             <div className="login loginContainer">
-                <SideNav page={'home'} />
+                <SideNav isQuizStart={this.state.isStart} page={'home'} />
                 {this.state.isLoading &&
                     <div style={styles.loadingContainer}>
                         <Spinner type="grow" color="warning" style={styles.loading} />
@@ -1131,7 +1224,7 @@ class Test extends Component {
                         :
                         this.quiz()
                     }
-                    <Toast style={styles.Toast} isOpen={this.state.toastData}>
+                    <Toast style={styles.Toast} isOpen={Boolean(this.state.toastData)}>
                         <ToastHeader>
                             Warning
                         </ToastHeader>
@@ -1249,7 +1342,7 @@ const styles = {
     answerContainerInner: { backgroundColor: '#eee', borderRadius: 30, paddingBottom: 10 },
     answerTxt: { fontFamily: 'DBH', fontWeight: 500, color: '#1c5379', fontSize: '30px' },
     answerContainerFullfill: { display: 'flex', flex: 1 },
-    matchingBtn: { fontFamily: 'DBH',fontSize:'25px', width: '75%', marginBottom: '20px', height: '50px', borderRadius: '25px' },
+    matchingBtn: { fontFamily: 'DBH', fontSize: '25px', width: '75%', marginBottom: '20px', height: '50px', borderRadius: '25px' },
     sendingAnswerLoading: { width: '3rem', height: '3rem', margin: 'auto' },
     sendingAnswerTxt: { color: '#1c5379', fontFamily: 'DBH', fontSize: '30px', fontWeight: '500' },
     sendingAnswerWarning: { color: 'red', fontFamily: 'DBH', fontSize: '30px', fontWeight: '500', display: 'flex', flexDirection: 'row', alignItems: 'center' },
@@ -1258,7 +1351,7 @@ const styles = {
     sendAnswerBtnConfirm: { width: '50%', background: '#00adee', borderWidth: 0, padding: 0, borderRadius: 30, alignSelf: "center", paddingLeft: 15, paddingRight: 15 },
     sendAnswerBtnCancel: { width: '50%', background: 'red', borderWidth: 0, padding: 0, borderRadius: 30, alignSelf: "center", paddingLeft: 15, paddingRight: 15 },
 
-    decorateLeft: { bottom: 0, left: 0, position: 'absolute', width: '25vw',marginLeft:'60px' },
+    decorateLeft: { bottom: 0, left: 0, position: 'absolute', width: '25vw', marginLeft: '60px' },
     decorateRight: { bottom: 0, right: 0, position: 'absolute', width: '25vw' },
 
     Toast: { position: 'absolute' },

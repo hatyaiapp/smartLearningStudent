@@ -18,6 +18,8 @@ let word = {
     th: {
         signUp: 'สมัครสมาชิก',
         email: 'อีเมล',
+        password:'รหัสผ่าน',
+        activateCode:'Activate Code',
         login: 'เข้าสู่ระบบ',
         alreadyHaveCode: 'มีรหัสลงทะเบียนแล้ว',
         activated: 'ลงทะเบียน',
@@ -37,7 +39,9 @@ let word = {
     en: {
         signUp: 'Sign Up',
         email: 'E-mail Address',
-        login: 'Log in',
+        password:'Password',
+        activateCode:'Activate Code',
+        login: 'Sign in',
         alreadyHaveCode: 'already have activated code',
         activated: 'Activate Account',
         name: 'Name Surname',
@@ -193,6 +197,33 @@ export default class Login extends Component {
                                         type="email" name="email" id="username" placeholder="Email"
                                     />
                                 </FormGroup>
+                                <FormGroup style={styles.inputBox}>
+                                    <p style={styles.inputLabel} className="label">{word[window.language].password}</p>
+                                    <Input
+                                        value={this.state.password}
+                                        onChange={(e) => this.setState({ password: e.target.value })}
+                                        style={styles.input}
+                                        type="password" name="password" id="username" placeholder="Password"
+                                    />
+                                </FormGroup>
+                                <FormGroup style={styles.inputBox}>
+                                    <p style={styles.inputLabel} className="label">{word[window.language].name}</p>
+                                    <Input
+                                        value={this.state.name}
+                                        onChange={(e) => this.setState({ name: e.target.value })}
+                                        style={styles.input}
+                                        type="email" name="name" id="username" placeholder="Name"
+                                    />
+                                </FormGroup>
+                                <FormGroup style={styles.inputBox}>
+                                    <p style={styles.inputLabel} className="label">{word[window.language].activateCode}</p>
+                                    <Input
+                                        value={this.state.activateCode}
+                                        onChange={(e) => this.setState({ activateCode: e.target.value })}
+                                        style={styles.input}
+                                        type="email" name="activateCode" id="username" placeholder="Activate code"
+                                    />
+                                </FormGroup>
                             </div>
                         }
 
@@ -253,7 +284,7 @@ export default class Login extends Component {
 
                         <div style={styles.registerContainer}>
                             <Button style={styles.registerBtn} onClick={() => this.setState({ backToLogin: true })} color="link">{word[window.language].login}</Button>
-                            {this.state.registerState === 1 && <Button style={{ ...styles.registerBtn, color: '#bb4d63' }} onClick={() => this.setState({ registerState: 2 })} color="link">{word[window.language].alreadyHaveCode}</Button>}
+                            {/* {this.state.registerState === 1 && <Button style={{ ...styles.registerBtn, color: '#bb4d63' }} onClick={() => this.setState({ registerState: 2 })} color="link">{word[window.language].alreadyHaveCode}</Button>} */}
                             {this.state.registerState === 2 && <Button style={{ ...styles.registerBtn, color: '#bb4d63' }} onClick={() => this.setState({ registerState: 1 })} color="link">{word[window.language].dontHaveCode}</Button>}
                         </div>
                     </div>

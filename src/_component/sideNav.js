@@ -19,14 +19,18 @@ let word = {
         personalInfo: 'ข้อมูลส่วนตัว',
         setting: 'ตั้งค่า',
         logout: 'ออกจากระบบ',
-        cancel: 'ยกเลิก'
+        cancel: 'ยกเลิก',
+        stopExam: 'หยุดทำข้อสอบ',
+        stopExamWarning: 'คุณต้องการยกเลิกการทำข้อสอบหรือไม่ ข้อมูลข้อสอบชุดนี้จะถูกบันทึกว่า "ไม่ได้ทำการส่งข้อสอบ"',
     },
     en: {
         home: 'Home',
         personalInfo: 'Personal Infomation',
         setting: 'Setting',
         logout: 'Log out',
-        cancel: 'Cancel'
+        cancel: 'Cancel',
+        stopExam: 'Stop doing the exam',
+        stopExamWarning: 'Do you want to stop doing the exam? This answer sheet will be saved with "Do not submit the exam"',
     }
 }
 
@@ -37,7 +41,9 @@ export default class Setting extends Component {
             confirmLogout: false,
             goUserPage: false,
             goTestPage: false,
-            goSettingPage: false
+            goSettingPage: false,
+
+            quizModal: false
         }
     }
 
@@ -65,8 +71,32 @@ export default class Setting extends Component {
             })
     }
 
+    navigate(act, warning) {
+        if (warning && act !== 'goTestPage') {
+            this.setState({ quizModal: true })
+        }
+        else {
+            this.setState({ [act]: true })
+        }
+    }
+
+    stopQuizModal(act) {
+        return (
+            <Modal isOpen={this.state.quizModal} toggle={() => this.setState({ quizModal: false })}>
+                <ModalHeader toggle={() => this.setState({ quizModal: false })}>{word[window.language].stopExam} ?</ModalHeader>
+                <ModalBody>
+                    {word[global.language].stopExamWarning}
+                </ModalBody>
+                <ModalFooter>
+                    <Button color="danger" onClick={() => this.setState({ quizModal: false }, () => this.setState({ [act]: true }))}>{word[window.language].stopExam}</Button>{' '}
+                    <Button color="secondary" onClick={() => this.setState({ quizModal: false/*, isStart: true, quitConfirmed: false*/ })}>{word[window.language].cancel}</Button>
+                </ModalFooter>
+            </Modal>
+        )
+    }
+
     render() {
-        let { page } = this.props
+        let { page, isQuizStart } = this.props
         if (this.state.redirectHome) {
             return <Redirect push to="/" />;
         }
@@ -105,7 +135,8 @@ export default class Setting extends Component {
                     <SideNav.Nav defaultSelected={page} style={styles.sideNavNav}>
                         <NavItem
                             eventKey="home"
-                            onClick={() => this.setState({ goTestPage: true })}
+                            onClick={() => this.navigate('goTestPage', isQuizStart)}
+                            active={page === 'home'}
                         >
                             <NavIcon>
                                 <i className="fa fa-fw fa-home" style={styles.ico} />
@@ -116,7 +147,8 @@ export default class Setting extends Component {
                         </NavItem>
                         <NavItem
                             eventKey="user"
-                            onClick={() => this.setState({ goUserPage: true })}
+                            onClick={() => this.navigate('goUserPage', isQuizStart)}
+                            active={page === 'user'}
                         >
                             <NavIcon>
                                 <i className="fa fa-fw fa-user-circle" style={styles.ico} />
@@ -127,7 +159,8 @@ export default class Setting extends Component {
                         </NavItem>
                         <NavItem
                             eventKey="setting"
-                            onClick={() => this.setState({ goSettingPage: true })}
+                            onClick={() => this.navigate('goSettingPage', isQuizStart)}
+                            active={page === 'setting'}
                         >
                             <NavIcon>
                                 <i className="fa fa-fw fa-cog" style={styles.ico} />
@@ -155,6 +188,8 @@ export default class Setting extends Component {
                         <Button color="secondary" onClick={() => this.setState({ confirmLogout: false })}>{word[window.language].cancel}</Button>
                     </ModalFooter>
                 </Modal>
+
+                {this.stopQuizModal(isQuizStart)}
 
             </ClickOutside>
         )

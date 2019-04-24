@@ -26,7 +26,7 @@ let word = {
         enterYourEmail: 'Enter your e-mail',
         enterYourPassword: 'Enter your password',
         login: 'Sign In',
-        signUpStudent: 'Sign Up (Student)',
+        signUpStudent: 'Sign Up',
         err_wrongAuth: 'Invalid Email or Password',
         err_notActivate: 'Have not activated account. (Please check E-mail)',
     }
