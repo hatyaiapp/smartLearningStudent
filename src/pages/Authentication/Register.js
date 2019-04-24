@@ -25,6 +25,7 @@ let word = {
         alreadyHaveCode: 'มีรหัสลงทะเบียนแล้ว',
         activated: 'ลงทะเบียน',
         name: 'ชื่อ นามสกุล',
+        
         password: 'รหัสผ่าน',
         dontHaveCode: 'ยังไม่มีรหัสลงทะเบียน',
         registerComplete: 'สมัครสมาชิกสำเร็จ',
@@ -46,6 +47,7 @@ let word = {
         alreadyHaveCode: 'already have activated code',
         activated: 'Activate Account',
         name: 'Name Surname',
+        
         password: 'Password',
         dontHaveCode: "do not have activated code",
         registerComplete: 'Register Complete',
@@ -90,7 +92,12 @@ export default class Login extends Component {
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
             method: 'POST',
-            body: JSON.stringify({ 'email': this.state.email })
+            body: JSON.stringify({ 
+                'number': this.state.email,
+                'inviteCode': this.state.inviteCode,
+                'name': this.state.name,
+                'password': this.state.password,
+            })
         })
             .then(res => Promise.all([res, res.json()]))
             .then(resp => {
@@ -210,10 +217,10 @@ export default class Login extends Component {
                                         type="email" name="email" id="username" placeholder="Email"
                                     />
                                 </FormGroup>
-                                <FormGroup style={styles.inputBox}>
+                                {/* <FormGroup style={styles.inputBox}>
                                     <p style={styles.inputLabel} className="label">{word[window.language].email}</p>
                                     <SelectSearch style={styles.input} options={options} value="sv" name="language" placeholder="Choose your language" />
-                                </FormGroup>
+                                </FormGroup> */}
                                 <FormGroup style={styles.inputBox}>
                                     <p style={styles.inputLabel} className="label">{word[window.language].password}</p>
                                     <Input
@@ -233,12 +240,12 @@ export default class Login extends Component {
                                     />
                                 </FormGroup>
                                 <FormGroup style={styles.inputBox}>
-                                    <p style={styles.inputLabel} className="label">{word[window.language].activateCode}</p>
+                                    <p style={styles.inputLabel} className="label">{word[window.language].inviteCode}</p>
                                     <Input
-                                        value={this.state.activateCode}
-                                        onChange={(e) => this.setState({ activateCode: e.target.value })}
+                                        value={this.state.inviteCode}
+                                        onChange={(e) => this.setState({ inviteCode: e.target.value })}
                                         style={styles.input}
-                                        type="email" name="activateCode" id="username" placeholder="Activate code"
+                                        type="text" name="activateCode" id="username" placeholder="Activate code"
                                     />
                                 </FormGroup>
                             </div>
