@@ -215,7 +215,7 @@ class Login extends Component {
 let styles = {
     loadingContainer: { display: 'flex', flex: 1, backgroundColor: '#000', opacity: '0.5', position: 'absolute', width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center' },
     loading: { width: '3rem', height: '3rem' },
-    loginBox: { width: '80vw', height: '80vh', backgroundColor: '#fff', alignSelf: 'center', borderRadius: 20, display: 'flex', flexDirection: 'column', overflowY: 'scroll' },
+    loginBox: { width: '85vw', height: '85vh', backgroundColor: '#fff', alignSelf: 'center', borderRadius: 20, display: 'flex', flexDirection: 'column', overflowY: 'scroll' },
     loginContainer: { display: 'flex', flex: 1, flexDirection: 'column', alignItems: 'center' },
     inputBox: { width: '60vw' },
     inputLabel: { textAlign: 'left', marginBottom: -5, fontSize: '30px' },

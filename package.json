@@ -17,6 +17,7 @@
     "react-lines-ellipsis": "^0.14.1",
     "react-router-dom": "^4.3.1",
     "react-scripts": "^2.1.8",
+    "react-select-search": "^0.9.6",
     "reactstrap": "^8.0.0",
     "redux": "^4.0.1",
     "video-react": "^0.13.2"

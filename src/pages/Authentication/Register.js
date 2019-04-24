@@ -1,9 +1,10 @@
 import React, { Component } from 'react';
 import '../../App.css';
-import { Button, Modal, ModalHeader, ModalBody, ModalFooter, Form, FormGroup, Input, Spinner, Fade } from 'reactstrap';
+import { Button, Modal, ModalHeader, ModalBody, ModalFooter, Form, FormGroup, Input, Spinner, Fade, Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
 import { HashRouter as Router, Route, Link, Redirect } from "react-router-dom";
 import { faCaretRight } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import SelectSearch from 'react-select-search'
 
 let showErr;
 
@@ -18,8 +19,8 @@ let word = {
     th: {
         signUp: 'สมัครสมาชิก',
         email: 'อีเมล',
-        password:'รหัสผ่าน',
-        activateCode:'Activate Code',
+        password: 'รหัสผ่าน',
+        activateCode: 'Activate Code',
         login: 'เข้าสู่ระบบ',
         alreadyHaveCode: 'มีรหัสลงทะเบียนแล้ว',
         activated: 'ลงทะเบียน',
@@ -39,8 +40,8 @@ let word = {
     en: {
         signUp: 'Sign Up',
         email: 'E-mail Address',
-        password:'Password',
-        activateCode:'Activate Code',
+        password: 'Password',
+        activateCode: 'Activate Code',
         login: 'Sign in',
         alreadyHaveCode: 'already have activated code',
         activated: 'Activate Account',
@@ -169,6 +170,18 @@ export default class Login extends Component {
     }
 
     render() {
+        const options = [
+            {name: 'Swedish', value: 'sv'},
+            {name: 'English', value: 'en'},
+            {
+                type: 'group',
+                name: 'Group name',
+                items: [
+                    {name: 'Spanish', value: 'es'},
+                ]
+            },
+        ];
+
         if (this.state.backToLogin) {
             return <Redirect to="/" />
         }
@@ -196,6 +209,10 @@ export default class Login extends Component {
                                         style={styles.input}
                                         type="email" name="email" id="username" placeholder="Email"
                                     />
+                                </FormGroup>
+                                <FormGroup style={styles.inputBox}>
+                                    <p style={styles.inputLabel} className="label">{word[window.language].email}</p>
+                                    <SelectSearch style={styles.input} options={options} value="sv" name="language" placeholder="Choose your language" />
                                 </FormGroup>
                                 <FormGroup style={styles.inputBox}>
                                     <p style={styles.inputLabel} className="label">{word[window.language].password}</p>
@@ -302,7 +319,7 @@ export default class Login extends Component {
                         <span style={styles.text}>{word[window.language].checkEmailGetCode}</span>
                     </ModalBody>
                     <ModalFooter>
-                        <Button style={styles.ModalBtnTxt} color="success" onClick={() => this.setState({ registerState: 2, registerComplete: false })}>{word[window.language].ok}</Button>
+                        <Button style={styles.ModalBtnTxt} color="success" onClick={() => this.setState({ /*registerState: 2,*/ registerComplete: false })}>{word[window.language].ok}</Button>
                     </ModalFooter>
                 </Modal>
 
@@ -323,12 +340,13 @@ export default class Login extends Component {
 let styles = {
     loadingContainer: { display: 'flex', flex: 1, backgroundColor: '#000', opacity: '0.5', position: 'absolute', width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center' },
     loading: { width: '3rem', height: '3rem' },
-    loginBox: { width: '80vw', height: '80vh', backgroundColor: '#fff', alignSelf: 'center', borderRadius: 20, display: 'flex', flexDirection: 'column', overflowY: 'scroll' },
+    loginBox: { width: '85vw', height: '85vh', backgroundColor: '#fff', alignSelf: 'center', borderRadius: 20, display: 'flex', flexDirection: 'column', overflowY: 'scroll' },
     loginContainer: { display: 'flex', flex: 1, flexDirection: 'column', alignItems: 'center' },
     text: { fontFamily: 'DBH', fontSize: '24px' },
     inputBox: { width: '60vw' },
     inputLabel: { textAlign: 'left', marginBottom: -5, fontSize: '30px' },
     input: { fontFamily: 'DBH', fontWeight: "500", fontSize: '30px' },
+    dropdownInput: { width: '100%', },
     finishBtn: { width: '60vw', margin: 'auto', fontFamily: 'DBH', fontSize: '30px', backgroundColor: '#f0592b', borderWidth: 0 },
     finishBtnIco: { width: '1.75vw', fontSize: '24px', color: '#fff' },
     registerContainer: { display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', width: '60vw', margin: 'auto' },
