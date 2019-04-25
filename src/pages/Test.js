@@ -174,10 +174,11 @@ class Test extends Component {
             focusExam: null,
             toastData: '',
             isFoundVideoRef: false,
-            latestVideoIndex: 0,
+            latestVideoIndex: -1,
             matchingDropdownOpenIndex: -1,
             matchingAnswer: JSON.parse(JSON.stringify(matchingAnswerExp.article)),
             votedId: null,
+            questionType: 'video'
         }
     }
 
@@ -293,22 +294,70 @@ class Test extends Component {
 
     handleStateChange(state, prevState) {
         // copy player state to this component's state
-        // console.log(state.currentTime)
-        if (Math.floor(state.currentTime) === 2 && this.state.latestVideoIndex !== 1) {
+        /*console.log(this.state.exam.find((e,index) => {
+            return (
+                Math.floor(state.currentTime) === e.second &&
+                this.state.latestVideoIndex !== index &&
+                !this.state.answer[index]
+            )
+        }))*/
+
+        if (
+            this.state.exam.find((e, index) => {
+                return (
+                    Math.floor(state.currentTime) === e.second &&
+                    this.state.latestVideoIndex !== index &&
+                    !this.state.answer[index]
+                )
+            })
+        ) {
             this.refs.player.pause();
+            console.log(state)
+            if (state.isFullscreen) {
+                this.refs.player.toggleFullscreen()
+            }
+            console.log('do exam')
+        }
+
+        if (this.state.latestVideoIndex !== -1 && Math.floor(state.currentTime) < this.state.exam[0].second) {
+            this.state.latestVideoIndex = -1
+        }
+        else if (this.state.latestVideoIndex !== (this.state.exam.length - 1) && Math.floor(state.currentTime) >= this.state.exam[this.state.exam.length - 1].second) {
+            this.state.latestVideoIndex = this.state.exam.length - 1
+        }
+        else if (
+            this.state.exam.find((e, index) => {
+                return (
+                    this.state.latestVideoIndex !== index &&
+                    Math.floor(state.currentTime) >= this.state.exam[index].second &&
+                    Math.floor(state.currentTime) < this.state.exam[index + 1].second
+                )
+            })
+        ) {
+            this.state.latestVideoIndex = this.state.exam.findIndex((e, index) => {
+                return (
+                    this.state.latestVideoIndex !== index &&
+                    Math.floor(state.currentTime) >= this.state.exam[index].second &&
+                    Math.floor(state.currentTime) < this.state.exam[index + 1].second
+                )
+            })
+        }
+
+        /*if (this.state.latestVideoIndex !== -1 && Math.floor(state.currentTime) < 120) {
+            this.state.latestVideoIndex = -1
+        }
+        else if (this.state.latestVideoIndex !== 0 && Math.floor(state.currentTime) >= 120 && Math.floor(state.currentTime) < 240) {
+            this.state.latestVideoIndex = 0
+        }
+        else if (this.state.latestVideoIndex !== 1 && Math.floor(state.currentTime) >= 240 && Math.floor(state.currentTime) < 360) {
             this.state.latestVideoIndex = 1
-            console.log('do exam 2')
         }
-        if (Math.floor(state.currentTime) === 4 && this.state.latestVideoIndex !== 2) {
-            this.refs.player.pause();
+        else if (this.state.latestVideoIndex !== 2 && Math.floor(state.currentTime) >= 360 && Math.floor(state.currentTime) < 480) {
             this.state.latestVideoIndex = 2
-            console.log('do exam 4')
         }
-        if (Math.floor(state.currentTime) === 6 && this.state.latestVideoIndex !== 3) {
-            this.refs.player.pause();
+        else if (this.state.latestVideoIndex !== 3 && Math.floor(state.currentTime) >= 480) {
             this.state.latestVideoIndex = 3
-            console.log('do exam 6')
-        }
+        }*/
     }
 
     handleVisibilityChange(_this) {
@@ -483,21 +532,21 @@ class Test extends Component {
             let imageBox = { marginBottom: isQuestion ? 20 : 0, marginTop: isQuestion ? 0 : 10 }
             let imageStyle = { height: isQuestion ? '30vh' : 'auto', width: isQuestion ? 'auto' : '18vw', borderRadius: 7 }
             return <div style={imageBox}>
-                <img src={'http://dev.hatyaiapp.com:11948' + media.path} alt={''} style={imageStyle} />
+                <img src={'http://student.questionquick.com:11948' + media.path} alt={''} style={imageStyle} />
             </div>
         }
         else if (media.type === 'video') {
-            let videoBox = { width: isQuestion ? '23vw' : '18vw', marginBottom: isQuestion ? 20 : 0, margin: 'auto', marginTop: isQuestion ? 0 : 10, borderRadius: 7, overflow: 'hidden' }
-            let videoStyle = { width: isQuestion ? '23vw' : '18vw', }
+            let videoBox = { width: isQuestion ? '40.8vw' : '17vw', marginBottom: isQuestion ? 20 : 0, margin: 'auto', marginTop: isQuestion ? 0 : 10, borderRadius: 7, overflow: 'hidden' }
+            let videoStyle = { width: isQuestion ? '40.8vw' : '17vw', }
             return <div style={videoBox}>
                 <Player
                     controls
                     fluid
                     style={videoStyle}
-                    width={isQuestion ? '23vw' : '18vw'}
-                    height={'30vw'}
-                    poster={'http://dev.hatyaiapp.com:11948' + media.path.replace('mp4', 'png')}
-                    src={'http://dev.hatyaiapp.com:11948' + media.path}
+                    width={isQuestion ? '40.8vw' : '17vw'}
+                    height={isQuestion ? '24vw' : '10vw'}
+                    poster={'http://student.questionquick.com:11948' + media.path.replace('mp4', 'png')}
+                    src={'hhttp://student.questionquick.com:11948' + media.path}
                 />
             </div>
         }
@@ -507,7 +556,7 @@ class Test extends Component {
             return <div style={audioBox}>
                 <ReactAudioPlayer
                     style={audioStyle}
-                    src={'http://dev.hatyaiapp.com:11948' + media.path}
+                    src={'http://student.questionquick.com:11948' + media.path}
                     autoPlay={false}
                     controls
                     controlsList="nodownload"
@@ -545,7 +594,7 @@ class Test extends Component {
 
         let item = this.state.qstn[arrIndex1]
         let data = this.state.qstn[arrIndex1].quizevents[arrIndex2]
-        console.log(item, data, arrIndex1, arrIndex2)
+        // console.log(item, data, arrIndex1, arrIndex2)
         this.setState({ isFetchingExam: true, startExamModal: true }, () => {
             if (data.exam) {
                 fetch('http://student.questionquick.com/exam/' + data.exam._id + '/questions',
@@ -555,7 +604,7 @@ class Test extends Component {
                     .then(res => res.json())
                     .then(exam => {
                         console.log('exam data', exam, data, item)
-                        this.setState({ /*: false,*/ exam, pickedQuiz: item, pickedQuizData: data, fullTimer: data.duration, timer: data.duration * 60 })
+                        this.setState({ /*: false,*/ exam, pickedQuiz: item, pickedQuizData: data, fullTimer: data.duration, timer: data.duration * 60, questionType: data.exam.type })
                     })
                     .catch(e => {
                         console.log(e)
@@ -752,9 +801,15 @@ class Test extends Component {
                             <div style={styles.diagramBox}>
                                 <div style={styles.diagramBoxInner}>
                                     {this.state.exam.map((d, index) => {
-                                        let diagramBtn = { width: '20px', height: '20px', border: this.state.current === index ? '2px solid #337ab7' : '2px solid transparent', backgroundColor: this.state.answer[index] !== undefined ? '#44b29c' : '#d9d5d5', marginTop: 2, marginLeft: 2, padding: 0 }
+                                        let diagramBtn = {}
+                                        if (this.state.questionType === 'normal') {
+                                            diagramBtn = { width: '20px', height: '20px', border: this.state.current === index ? '2px solid #337ab7' : '2px solid transparent', backgroundColor: this.state.answer[index] !== undefined ? '#44b29c' : '#d9d5d5', marginTop: 2, marginLeft: 2, padding: 0 }
+                                        }
+                                        else if (this.state.questionType === 'video') {
+                                            diagramBtn = { width: '20px', height: '20px', border: this.state.latestVideoIndex === index ? '2px solid #337ab7' : '2px solid transparent', backgroundColor: this.state.answer[index] !== undefined ? '#44b29c' : '#d9d5d5', marginTop: 2, marginLeft: 2, padding: 0 }
+                                        }
                                         return (
-                                            <Button key={index} onClick={() => this.setState({ current: index })} style={diagramBtn}>
+                                            <Button key={index} onClick={() => { this.state.questionType === 'normal' ? this.setState({ current: index }) : this.videoJumper(index) }} style={diagramBtn}>
                                                 <p style={styles.diagramTxt}>{index + 1}</p>
                                             </Button>
                                         )
@@ -796,10 +851,10 @@ class Test extends Component {
 
                 <div style={styles.quizBox2}>
                     <div style={styles.examTopicContainer}>
-                        <h1 style={styles.examTopicTxt}>{word[window.language].question} {this.state.current + 1} {word[window.language].from} {this.state.exam.length}</h1>
+                        <h1 style={styles.examTopicTxt}>{word[window.language].question} {this.state.questionType === 'video' ? this.state.latestVideoIndex + 1 : this.state.current + 1} {word[window.language].from} {this.state.exam.length}</h1>
                         <div style={styles.examRouter}>
-                            {this.state.current > 0 ?
-                                <Button onClick={() => this.setState({ current: this.state.current - 1 })} style={styles.routerBtn}>
+                            {(this.state.questionType === 'normal' && this.state.current > 0) || (this.state.questionType === 'video' && this.state.latestVideoIndex > 0) ?
+                                <Button onClick={() => { this.state.questionType === 'normal' ? this.setState({ current: this.state.current - 1 }) : this.videoJumper(this.state.latestVideoIndex - 1) }} style={styles.routerBtn}>
                                     <FontAwesomeIcon icon={faCaretLeft} style={styles.routerBtnIco} />
                                     <span style={styles.routerBtnTxt}>{word[window.language].back}</span>
                                 </Button>
@@ -809,8 +864,8 @@ class Test extends Component {
                                     <span style={styles.routerBtnTxt}>{word[window.language].back}</span>
                                 </Button>
                             }
-                            {this.state.current !== (this.state.exam.length - 1) ?
-                                <Button onClick={() => this.setState({ current: this.state.current + 1 })} style={styles.routerBtn}>
+                            {(this.state.questionType === 'normal' && this.state.current !== (this.state.exam.length - 1)) || (this.state.questionType === 'video' && this.state.latestVideoIndex !== (this.state.exam.length - 1)) ?
+                                <Button onClick={() => { this.state.questionType === 'normal' ? this.setState({ current: this.state.current + 1 }) : this.videoJumper(this.state.latestVideoIndex + 1) }} style={styles.routerBtn}>
                                     <span style={styles.routerBtnTxt}>{word[window.language].forward}</span>
                                     <FontAwesomeIcon icon={faCaretRight} style={styles.routerBtnIco} />
                                 </Button>
@@ -825,7 +880,7 @@ class Test extends Component {
 
                     <div style={styles.examContainer}>
 
-                        {this.state.exam[this.state.current] && this.state.exam[this.state.current].choices && this.state.exam[this.state.current].choices.length > 0 ?
+                        {this.state.questionType === 'normal' && this.state.exam[this.state.current] && this.state.exam[this.state.current].choices && this.state.exam[this.state.current].choices.length > 0 ?
                             //choice
                             <div style={styles.examContainerInner}>
                                 <span style={styles.question}>
@@ -875,7 +930,7 @@ class Test extends Component {
                             null
                         }
 
-                        {this.state.exam[this.state.current] && this.state.exam[this.state.current].choices && this.state.exam[this.state.current].choices.length === 0 ?
+                        {this.state.questionType === 'normal' && this.state.exam[this.state.current] && this.state.exam[this.state.current].choices && this.state.exam[this.state.current].choices.length === 0 ?
                             //text
                             <div style={styles.examContainerInner}>
                                 <span style={styles.question}>
@@ -989,24 +1044,59 @@ class Test extends Component {
                             null
                         }
 
-                        {this.state.examType === 1 && false ?
+                        {this.state.questionType === 'video' ?
                             //video
                             <div style={styles.examContainerInner}>
-                                <div style={{ width: '18vw', marginBottom: 20, margin: 'auto', marginTop: 0, borderRadius: 7, overflow: 'hidden' }}>
+                                <div style={{ width: '51vw', marginBottom: 20, marginLeft: 'auto', marginRight: 'auto', marginTop: 0 }}>
                                     <Player
                                         ref="player"
                                         startTime={0}
                                         controls
                                         fluid
-                                        style={{ width: '18vw' }}
-                                        width={'18vw'}
+                                        style={{ width: '51vw' }}
+                                        width={'51vw'}
                                         height={'30vw'}
-                                        poster={'http://dev.hatyaiapp.com:11948/upload/0zxbvniigw280gaibf4u/100vohunu02dh7ntr1s1/jsk03tjx.png'}
-                                        src={'http://dev.hatyaiapp.com:11948/upload/0zxbvniigw280gaibf4u/100vohunu02dh7ntr1s1/jsk03tjx.mp4'}
+                                        poster={'http://student.questionquick.com:11948' + this.state.pickedQuizData.exam.media.path.replace('.mp4', '.png')}
+                                        src={'http://student.questionquick.com' + this.state.pickedQuizData.exam.media.path}
                                     />
                                 </div>
+                                <span style={styles.question}>
+                                    {this.state.exam[this.state.latestVideoIndex] && this.state.exam[this.state.latestVideoIndex].text}
+                                </span>
                                 <div style={styles.answerContainer}>
-
+                                    {this.state.exam[this.state.latestVideoIndex] && this.state.exam[this.state.latestVideoIndex].choices.map((c, index) => {
+                                        let timeoutOpacity = this.state.isTimeOut ? 0.5 : 1
+                                        let btnStyle = { width: '97%', backgroundColor: JSON.stringify(this.state.answer[this.state.latestVideoIndex]) === JSON.stringify({ "qid": this.state.exam[this.state.latestVideoIndex].qid, "cid": c.cid }) ? '#2abaf0' : '#fff', border: '2px solid #2abaf0', padding: 0, borderRadius: 30, marginTop: 10 }
+                                        return (
+                                            <div key={index} style={{ ...styles.answerBtnContainer, opacity: timeoutOpacity }}>
+                                                <div style={styles.answerContainerInner}>
+                                                    <Button
+                                                        onClick={() => {
+                                                            if (JSON.stringify(this.state.answer[this.state.latestVideoIndex]) === JSON.stringify({ "qid": this.state.exam[this.state.latestVideoIndex].qid, "cid": c.cid })) {
+                                                                this.setState({ answer: { ...this.state.answer, [this.state.current]: undefined } })
+                                                            }
+                                                            else {
+                                                                this.setState({ answer: { ...this.state.answer, [this.state.latestVideoIndex]: { "qid": this.state.exam[this.state.latestVideoIndex].qid, "cid": c.cid } } })
+                                                                this.refs.player.play()
+                                                                // if (this.state.latestVideoIndex < this.state.exam.length - 1) {
+                                                                //     this.setState({ latestVideoIndex: this.state.latestVideoIndex + 1 })
+                                                                // }
+                                                                // else {
+                                                                //     this.forceUpdate()
+                                                                // }
+                                                            }
+                                                        }}
+                                                        disabled={this.state.isTimeOut}
+                                                        style={btnStyle}
+                                                    >
+                                                        <span style={styles.answerTxt}>{c.text}</span>
+                                                    </Button>
+                                                    {c.media && this.getMedia(c.media, false)}
+                                                </div>
+                                                <div style={styles.answerContainerFullfill} />
+                                            </div>
+                                        )
+                                    })}
                                 </div>
                             </div>
                             :
@@ -1101,6 +1191,12 @@ class Test extends Component {
                 </Modal>
             </div>
         )
+    }
+
+    videoJumper(i) {
+        if(this.state.exam[i]){
+            this.refs.player.seek(this.state.exam[i].second)
+        }
     }
 
     getDefaultColor(i) {
