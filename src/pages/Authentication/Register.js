@@ -15,6 +15,15 @@ class CodeError extends Error {
     }
 }
 
+let room = [
+    { value: '1_1', name: '1/1' },
+    { value: '1_2', name: '1/2' },
+    { value: '1_3', name: '1/3' },
+    { value: '1_4', name: '1/4' },
+    { value: '1_5', name: '1/5' },
+    { value: '1_6', name: '1/6' }
+]
+
 let word = {
     th: {
         signUp: 'สมัครสมาชิก',
@@ -33,6 +42,8 @@ let word = {
         checkEmailGetCode: 'กรุณาตรวจสอบ Email เพื่อรับ "Activate Code"',
         activatedComplete: 'ลงทะเบียนสำเร็จ',
         ok: 'ตกลง',
+        school: 'สถานศึกษา',
+        room: 'ห้องเรียน',
         err_accountNotActivated: 'ยังไม่ได้ยืนยันการสมัครสมาชิกผ่านอีเมล',
         err_duplicateEmail: 'อีเมลนี้ถูกใช้งานแล้ว',
         err_requireInviteCode: 'กรุณากรอกข้อมูล Invite Code',
@@ -56,6 +67,8 @@ let word = {
         checkEmailGetCode: 'Please check your email to activate account',
         activatedComplete: 'Activated account complate',
         ok: 'OK',
+        school: 'School/University',
+        room: 'Room',
         err_accountNotActivated: 'Account not activated',
         err_duplicateEmail: 'Duplicate email',
         err_requireInviteCode: 'Require invite code',
@@ -79,12 +92,29 @@ export default class Login extends Component {
             inviteCode: '',
             name: '',
             password: '',
-            registerComplete: false
+            registerComplete: false,
+            school: []
         }
     }
 
     componentDidMount() {
         this.setState({ inviteCode: this.props.ac || '', registerState: /*this.props.ac ? 2 :*/ 1 })
+
+        fetch('http://student.questionquick.com/user/school/', {
+            credentials: 'include'
+        })
+            .then(res => res.json())
+            .then(s => {
+                for (let i = 0; i < s.length; i++) {
+                    s[i].value = s[i]['_id'];
+                    delete s[i]._id;
+                }
+                console.log(s)
+                this.setState({ school: s })
+            })
+            .catch(err => {
+                this.setState({ school: [] })
+            })
     }
 
     SendEmail() {
@@ -201,6 +231,7 @@ export default class Login extends Component {
                                 <FormGroup style={styles.inputBox}>
                                     <p style={styles.inputLabel} className="label">{word[window.language].studentId}</p>
                                     <Input
+                                        className="textInput"
                                         value={this.state.studentId}
                                         onChange={(e) => this.setState({ email: e.target.value })}
                                         style={styles.input}
@@ -214,9 +245,11 @@ export default class Login extends Component {
                                 <FormGroup style={styles.inputBox}>
                                     <p style={styles.inputLabel} className="label">{word[window.language].password}</p>
                                     <Input
+                                        className="test"
                                         value={this.state.password}
                                         onChange={(e) => this.setState({ password: e.target.value })}
                                         style={styles.input}
+                                        className={'textInput'}
                                         type="password" name="password" id="password" placeholder="Password"
                                     />
                                 </FormGroup>
@@ -226,10 +259,33 @@ export default class Login extends Component {
                                         value={this.state.name}
                                         onChange={(e) => this.setState({ name: e.target.value })}
                                         style={styles.input}
+                                        className={'textInput'}
                                         type="text" name="name" id="name" placeholder="Name"
                                     />
                                 </FormGroup>
                                 <FormGroup style={styles.inputBox}>
+                                    <p style={styles.inputLabel} className="label">{word[window.language].school}</p>
+                                    <SelectSearch
+                                        options={this.state.school}
+                                        onChange={(e) => this.setState({ pickedSchool: e })}
+                                        value={this.state.pickedSchool && this.state.pickedSchool.value}
+                                        mode="input"
+                                        name="language"
+                                        placeholder="Choose your School/University"
+                                    />
+                                </FormGroup>
+                                <FormGroup style={{ ...styles.inputBox, marginTop: -15 }}>
+                                    <p style={styles.inputLabel} className="label">{word[window.language].room}</p>
+                                    <SelectSearch
+                                        options={room}
+                                        onChange={(e) => this.setState({ pickedRoom: e })}
+                                        value={this.state.pickedRoom && this.state.pickedRoom.value}
+                                        mode="input"
+                                        name="language"
+                                        placeholder="Choose your Room"
+                                    />
+                                </FormGroup>
+                                {/* <FormGroup style={styles.inputBox}>
                                     <p style={styles.inputLabel} className="label">{word[window.language].inviteCode}</p>
                                     <Input
                                         value={this.state.inviteCode}
@@ -237,7 +293,7 @@ export default class Login extends Component {
                                         style={styles.input}
                                         type="text" name="activateCode" id="activateCode" placeholder="Invite code"
                                     />
-                                </FormGroup>
+                                </FormGroup> */}
                             </div>
                         }
 

@@ -11,6 +11,7 @@ import Register from './pages/Authentication/Register'
 import Test from './pages/Test'
 import User from './pages/User'
 import Setting from './pages/Setting'
+import History from './pages/History'
 // import * as Sentry from '@sentry/browser';
 // Sentry.init({ dsn: "https://ea9d64f5fc6943a9bac59a807051df3d@sentry.io/1431827" });
 
@@ -44,9 +45,11 @@ class Nav extends Component {
         <div>
           <Switch>
             <Route exact path="/" component={Login} />
-            <Route path="/test" component={Test} />
+            <Route path="/test/:code" component={test} />
+            <Route path="/test" component={test} />
             <Route path="/user" component={User} />
             <Route path="/setting" component={Setting} />
+            <Route path="/history" component={History} />
             <Route path="/register/:code" component={register} />
             <Route path="/register/" component={Register} />
           </Switch>
@@ -54,14 +57,18 @@ class Nav extends Component {
       </Router>
     )
   }
-
 }
-
-
 
 function register({ match }) {
   return (
     <Register ac={match.params.code} />
+  );
+}
+
+function test({ match }) {
+  console.log(match)
+  return (
+    <Test ac={match.params.code} />
   );
 }
 export default Nav

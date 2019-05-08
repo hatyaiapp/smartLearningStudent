@@ -17,6 +17,7 @@ let word = {
     th: {
         home: 'หน้าแรก',
         personalInfo: 'ข้อมูลส่วนตัว',
+        history: 'ประวัติการสอบ',
         setting: 'ตั้งค่า',
         logout: 'ออกจากระบบ',
         cancel: 'ยกเลิก',
@@ -26,6 +27,7 @@ let word = {
     en: {
         home: 'Home',
         personalInfo: 'Personal Infomation',
+        history: 'Exam History',
         setting: 'Setting',
         logout: 'Log out',
         cancel: 'Cancel',
@@ -42,6 +44,7 @@ export default class Setting extends Component {
             goUserPage: false,
             goTestPage: false,
             goSettingPage: false,
+            goHistoryPage: false,
 
             quizModal: false,
             navAct: null,
@@ -114,6 +117,10 @@ export default class Setting extends Component {
             return <Redirect push to="/setting" />;
         }
 
+        if (this.state.goHistoryPage && page !== 'history') {
+            return <Redirect push to="/history" />;
+        }
+
         return (
             <ClickOutside
                 onClickOutside={() => {
@@ -156,6 +163,18 @@ export default class Setting extends Component {
                             </NavIcon>
                             <NavText>
                                 {word[window.language].personalInfo}
+                            </NavText>
+                        </NavItem>
+                        <NavItem
+                            eventKey="history"
+                            onClick={() => this.navigate('goHistoryPage', isQuizStart)}
+                            active={page === 'history'}
+                        >
+                            <NavIcon>
+                                <i className="fa fa-fw fa-history" style={styles.ico} />
+                            </NavIcon>
+                            <NavText>
+                                {word[window.language].history}
                             </NavText>
                         </NavItem>
                         <NavItem

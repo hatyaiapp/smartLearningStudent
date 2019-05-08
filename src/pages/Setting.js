@@ -32,7 +32,7 @@ export default class Setting extends Component {
     }
 
     componentDidMount() {
-        fetch('http://student.questionquick.com/user/',
+        fetch('http://student.questionquick.com/profile/',
             {
                 credentials: 'include',
             })
@@ -99,7 +99,7 @@ export default class Setting extends Component {
 const styles = {
     loadingContainer: { display: 'flex', flex: 1, backgroundColor: '#000', opacity: '0.5', position: 'absolute', width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center' },
     loading: { width: '3rem', height: '3rem' },
-    container: { zIndex: 2, width: '80vw', height: '80vh', backgroundColor: '#fff', alignSelf: 'center', borderRadius: 20, display: 'flex', flexDirection: 'column', overflowY: 'scroll', marginLeft: '60px' },
+    container: { zIndex: 2, width: '85vw', height: '85vh', backgroundColor: '#fff', alignSelf: 'center', borderRadius: 20, display: 'flex', flexDirection: 'column', overflowY: 'scroll', marginLeft: '60px' },
     topic: { color: '#ff5f6d', fontFamily: 'DBH', fontSize: '45px' },
     decotateLeft: { bottom: 0, left: 0, position: 'absolute', width: '25vw', marginLeft: '60px' },
     decotateRight: { bottom: 0, right: 0, position: 'absolute', width: '25vw' },

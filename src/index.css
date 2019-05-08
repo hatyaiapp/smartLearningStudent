@@ -9,7 +9,6 @@ body, html {
   -moz-osx-font-smoothing: grayscale;
   overflow: hidden;
 }
-
 ::-moz-selection { /* Code for Firefox */
   /* color: red; */
   background: #eee;
@@ -18,6 +17,28 @@ body, html {
 ::selection {
   /* color: red;  */
   background: #eee;
+}
+
+::-webkit-input-placeholder { /* WebKit, Blink, Edge */
+  color:    #909;
+}
+:-moz-placeholder { /* Mozilla Firefox 4 to 18 */
+ color:    #909;
+ opacity:  1;
+}
+::-moz-placeholder { /* Mozilla Firefox 19+ */
+ color:    #909;
+ opacity:  1;
+}
+:-ms-input-placeholder { /* Internet Explorer 10-11 */
+ color:    #909;
+}
+::-ms-input-placeholder { /* Microsoft Edge */
+ color:    #909;
+}
+
+::placeholder { /* Most modern browsers support this now. */
+ color:    #909;
 }
 
 @font-face {

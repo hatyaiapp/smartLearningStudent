@@ -1,33 +1,17 @@
 import React, { Component } from 'react';
 import '../App.css';
-import { Button, Modal, ModalHeader, ModalBody, ModalFooter, UncontrolledCollapse, Spinner, CustomInput, Collapse, Toast, ToastHeader, ToastBody, Input, Dropdown, DropdownToggle, DropdownMenu, DropdownItem, Progress } from 'reactstrap';
-import { faUser, faClock, faFileAlt, faCalendarAlt, faCaretRight, faCaretLeft, faExclamationCircle, faInfoCircle, faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
+import { Button, Modal, ModalHeader, ModalBody, ModalFooter, UncontrolledCollapse, Spinner, CustomInput, Collapse, Toast, ToastHeader, ToastBody, Input, Dropdown, DropdownToggle, DropdownMenu, DropdownItem, Progress, Alert } from 'reactstrap';
+import { faUser, faClock, faFileAlt, faCalendarAlt, faCaretRight, faCaretLeft, faExclamationCircle, faInfoCircle, faEye, faEyeSlash, faArrowAltCircleRight, faTimes, faArrowsAltH } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Player } from 'video-react';
 import ReactAudioPlayer from 'react-audio-player';
 import SideNav from '../_component/sideNav'
 import { BrowserRouter as Router, Route, Link, Redirect } from "react-router-dom";
+// import Camera from 'react-camera';
+import Camera from 'react-html5-camera-photo';
+import 'react-html5-camera-photo/build/css/index.css';
 import LinesEllipsis from 'react-lines-ellipsis'
 import '@trendmicro/react-sidenav/dist/react-sidenav.css';
-
-var matchingAnswerExp = {
-    article: [
-        { _id: 'QWERT', value: 'ant' },
-        { _id: 'YUIOP', value: 'bird' },
-        { _id: 'ASDFG', value: 'cat' },
-        { _id: 'HJKLZ', value: 'dog' },
-        { _id: 'XCVBN', value: 'elephant' },
-        { _id: 'QAZWS', value: 'fox' },
-    ],
-    answer: [
-        { _id: 'TGBYH', value: 'b' },
-        { _id: 'HFRDS', value: 'e' },
-        { _id: 'IHDWC', value: 'a' },
-        { _id: 'AEFOK', value: 'd' },
-        { _id: 'MKGTS', value: 'f' },
-        { _id: 'RUSCV', value: 'c' },
-    ]
-}
 
 let votingData = [
     { _id: 'QTSHCM', value: 'John', amount: 10 },
@@ -87,7 +71,10 @@ var word = {
         stopExam: 'หยุดทำข้อสอบ',
         stopExamWarning: 'คุณต้องการยกเลิกการทำข้อสอบหรือไม่ ข้อมูลข้อสอบชุดนี้จะถูกบันทึกว่า "ไม่ได้ทำการส่งข้อสอบ"',
         answer: 'คำตอบ',
-        article: 'คำถาม'
+        article: 'คำถาม',
+        onlyPickOne: '* สามารถเลือกคำตอบได้เพียงครั้งเดียวเท่านั้น *',
+        notHaveQuestionYet: 'ยังไม่มีคำถามในขณะนี้',
+        changeTabWarning: 'คุณได้ทำการเปลี่ยนไปทำงานในเว็บไซต์ หรือโปรแกรมอื่นๆ'
     },
     en: {
         m: 'M.',
@@ -123,9 +110,14 @@ var word = {
         stopExam: 'Stop doing the exam',
         stopExamWarning: 'Do you want to stop doing the exam? This answer sheet will be saved with "Do not submit the exam"',
         answer: 'Answer',
-        article: 'Article'
+        article: 'Article',
+        onlyPickOne: '* Can choose the answer only once *',
+        notHaveQuestionYet: 'There are no questions at this time.',
+        changeTabWarning: 'You are change to work on the other website or other programs'
     }
 }
+
+var alertTimeout;
 
 let hidden = null;
 let visibilityChange = null;
@@ -176,22 +168,19 @@ class Test extends Component {
             isFoundVideoRef: false,
             latestVideoIndex: -1,
             matchingDropdownOpenIndex: -1,
-            matchingAnswer: JSON.parse(JSON.stringify(matchingAnswerExp.article)),
             votedId: null,
-            questionType: 'video'
+            questionType: 'normal',
+            isVoteSubmited: false
         }
     }
 
     componentDidMount() {
         let _this = this
-        // this.refs.player.subscribeToStateChange(this.handleStateChange.bind(this));
         document.addEventListener(visibilityChange, () => this.handleVisibilityChange(this), false);
         window.addEventListener("focus", () => this.onFocus(this))
         window.addEventListener("beforeunload", (e) => this.onUnload(e, _this))
         window.history.pushState(null, null, window.location.href);
         window.onpopstate = function (e) {
-            console.log('e', e)
-            console.log('isStart', _this.state.isStart)
             if (_this.state.isStart) {
                 _this.setState({ quizModal: true, quitConfirmed: true })
                 window.history.go(1)
@@ -202,8 +191,7 @@ class Test extends Component {
                 window.history.go(1)
             }
             else {
-                // window.sideNav = false
-                // _this.forceUpdate()
+
             }
         };
         fetch('http://student.questionquick.com/course',
@@ -212,29 +200,28 @@ class Test extends Component {
             })
             .then(res => res.json())
             .then(qstn => {
-                console.log('qstn', qstn)
                 if (qstn.message === 'Not Login') {
-                    fetch('http://student.questionquick.com/session/',
-                        {
-                            credentials: 'include',
-                            //headers: { 'Content-Type': 'application/json' },
-                            method: 'DELETE',
-                        })
-                        .then(res => res.json())
-                        .then(e => {
-                            if (e.code === '401') {
-                                throw new CodeError(e.message, e.code);
-                            }
-                            else {
-                                this.setState({ isLoading: false, redirectHome: true })
-                                console.log(e)
-                            }
+                    console.log(qstn)
+                    // fetch('http://student.questionquick.com/session/',
+                    //     {
+                    //         credentials: 'include',
+                    //         method: 'DELETE',
+                    //     })
+                    //     .then(res => res.json())
+                    //     .then(e => {
+                    //         if (e.code === '401') {
+                    //             throw new CodeError(e.message, e.code);
+                    //         }
+                    //         else {
+                    //             this.setState({ isLoading: false, redirectHome: true })
+                    //             console.log(e)
+                    //         }
 
-                        })
-                        .catch(err => {
-                            this.setState({ isLoading: false }, () => /*alert(err.message)*/null)
-                            console.log('error', err)
-                        })
+                    //     })
+                    //     .catch(err => {
+                    //         this.setState({ isLoading: false }, () => /*alert(err.message)*/null)
+                    //         console.log('error', err)
+                    //     })
                 }
                 else {
                     fetch('http://student.questionquick.com/session/',
@@ -253,9 +240,24 @@ class Test extends Component {
                                     })
                                     .then(res => res.json())
                                     .then(user => {
-                                        this.setState({ isLoading: false, user, qstn }, () => console.log(
-                                            "user", this.state.user, '\n', "qstn", this.state.qstn
-                                        ))
+                                        console.log(qstn)
+                                        this.setState({ isLoading: false, user, qstn }, () => {
+                                            for (let i in qstn) {
+                                                for (let j in qstn[i].quizevents) {
+                                                    if (qstn[i].quizevents[j].qeid === this.props.ac) {
+                                                        this.setState({ event: i + '_' + j, focusExam: this.getOutOfTimeTxt(qstn[i].quizevents[j].start, qstn[i].quizevents[j].end) }, () => {
+                                                            this.pickExam()
+                                                        })
+                                                    }
+                                                }
+                                            }
+                                            // if (this.props.ac && qstn.find(q => { return (q.qeid === this.props.ac) })) {
+                                            //     alert('found')
+                                            // }
+                                            // else {
+                                            //     alert('not found')
+                                            // }
+                                        })
                                     })
                             }
 
@@ -272,36 +274,55 @@ class Test extends Component {
             })
     }
 
-    onUnload(event, _this) { // the method that will be used for both add and remove event
+    componentWillUnmount() {
+        window.removeEventListener("focus", this.onFocus)
+        // window.removeEventListener("beforeunload", this.onUnload)
+    }
+
+    onUnload(event, _this) {
         if (_this.state.isStart && !_this.state.quitConfirmed) {
             event.preventDefault();
             event.returnValue = '';
         }
     }
 
-    componentWillUnmount() {
-        window.removeEventListener("focus", this.onFocus)
-        // window.removeEventListener("beforeunload", this.onUnload)
-    }
-
     onFocus(_this) {
-        _this.setState({ toastData: 'focus' }, () => {
-            setTimeout(function () {
-                _this.setState({ toastData: '' })
-            }, 3000);
-        })
+        if (_this.state.isStart) {
+            _this.setState({ toastData: word[window.language].changeTabWarning }, () => {
+                // clearTimeout(alertTimeout)
+                alertTimeout = setTimeout(function () {
+                    _this.setState({ toastData: '' })
+                }, 3000);
+            })
+        }
     }
 
-    handleStateChange(state, prevState) {
-        // copy player state to this component's state
-        /*console.log(this.state.exam.find((e,index) => {
-            return (
-                Math.floor(state.currentTime) === e.second &&
-                this.state.latestVideoIndex !== index &&
-                !this.state.answer[index]
-            )
-        }))*/
+    handleVisibilityChange(_this) {
+        // let alert;
+        // if (document[hidden]) {
+        //     console.log("change tab")
+        //     clearTimeout(alert)
+        //     _this.setState({ toastData: 'change tab' }, () => {
+        //         alert = setTimeout(function () {
+        //             _this.setState({ toastData: '' })
+        //         }, 3000);
+        //     })
+        //     // alert(1)
+        //     // this.setState({ actions: [...this.state.actions, 'hide'] });
+        // } else {
+        //     console.log("back from other tab")
+        //     clearTimeout(alert)
+        //     _this.setState({ toastData: 'back from other tab' }, () => {
+        //         alert = setTimeout(function () {
+        //             _this.setState({ toastData: '' })
+        //         }, 3000);
+        //     })
+        //     // alert(2)
+        //     // this.setState({ actions: [...this.state.actions, 'show'] });
+        // }
+    }
 
+    handleVideoStateChange(state, prevState) {
         if (
             this.state.exam.find((e, index) => {
                 return (
@@ -312,11 +333,9 @@ class Test extends Component {
             })
         ) {
             this.refs.player.pause();
-            console.log(state)
             if (state.isFullscreen) {
                 this.refs.player.toggleFullscreen()
             }
-            console.log('do exam')
         }
 
         if (this.state.latestVideoIndex !== -1 && Math.floor(state.currentTime) < this.state.exam[0].second) {
@@ -342,47 +361,20 @@ class Test extends Component {
                 )
             })
         }
-
-        /*if (this.state.latestVideoIndex !== -1 && Math.floor(state.currentTime) < 120) {
-            this.state.latestVideoIndex = -1
-        }
-        else if (this.state.latestVideoIndex !== 0 && Math.floor(state.currentTime) >= 120 && Math.floor(state.currentTime) < 240) {
-            this.state.latestVideoIndex = 0
-        }
-        else if (this.state.latestVideoIndex !== 1 && Math.floor(state.currentTime) >= 240 && Math.floor(state.currentTime) < 360) {
-            this.state.latestVideoIndex = 1
-        }
-        else if (this.state.latestVideoIndex !== 2 && Math.floor(state.currentTime) >= 360 && Math.floor(state.currentTime) < 480) {
-            this.state.latestVideoIndex = 2
-        }
-        else if (this.state.latestVideoIndex !== 3 && Math.floor(state.currentTime) >= 480) {
-            this.state.latestVideoIndex = 3
-        }*/
     }
 
-    handleVisibilityChange(_this) {
-        if (document[hidden]) {
-            console.log('change tab')
-            _this.setState({ toastData: 'focus' }, () => {
-                setTimeout(function () {
-                    _this.setState({ toastData: 'change tab' })
-                }, 3000);
-            })
-            // alert(1)
-            // this.setState({ actions: [...this.state.actions, 'hide'] });
-        } else {
-            _this.setState({ toastData: 'focus' }, () => {
-                setTimeout(function () {
-                    _this.setState({ toastData: 'back from other tab' })
-                }, 3000);
-            })
-            // alert(2)
-            // this.setState({ actions: [...this.state.actions, 'show'] });
-        }
-    }
+    decrementClock = () => {
+        this.setState({ timer: this.state.timer - 1 }, () => {
+            if (this.state.timer <= 0) {
+                this.setState({ isTimeOut: true })
+                clearInterval(this.clockCall);
+            }
+        })
+    };
 
+    ////ACTIVE////
     start() {
-        console.log(this.state.pickedQuiz, this.state.pickedQuizData)
+        // console.log(this.state.pickedQuiz, this.state.pickedQuizData)
 
         // //for test only
         // this.setState({ isStart: true, isLoading: false, startExamModal: false, /*answersheet: e*/ }, () => {
@@ -415,7 +407,7 @@ class Test extends Component {
                         this.setState({ isLoading: false })
                     }
                     else {
-                        console.log('e', e)
+                        // console.log('e', e)
                         this.setState({ isStart: true, isLoading: false, startExamModal: false, answersheet: e }, () => {
                             this.clockCall = setInterval(() => {
                                 this.decrementClock();
@@ -435,63 +427,6 @@ class Test extends Component {
                     console.log('error', err)
                 })
         })
-    }
-
-    decrementClock = () => {
-        // this.setState((prevstate) => ({ timer: prevstate.timer-1 },() => {});
-        this.setState({ timer: this.state.timer - 1 }, () => {
-            if (this.state.timer <= 0) {
-                this.setState({ isTimeOut: true })
-                clearInterval(this.clockCall);
-            }
-        })
-    };
-
-    getTimeTxt(sec) {
-        var sec_num = parseInt(sec, 10); // don't forget the second param
-        // var hours = Math.floor(sec_num / 3600);
-        var minutes = Math.floor(sec_num / 60);
-        var seconds = sec_num - (minutes * 60);
-
-        // if (hours < 10) { hours = "0" + hours; }
-        if (minutes < 10) { minutes = "0" + minutes; }
-        if (seconds < 10) { seconds = "0" + seconds; }
-
-        return /*hours + ':' +*/ minutes + ':' + seconds;
-    }
-
-    isFinish() {
-        for (let i in this.state.exam) {
-            if (this.state.answer[i] === undefined) {
-                return false
-            }
-        }
-        return true
-    }
-
-    getProgress() {
-        let pickCount = 0
-        for (let i in this.state.exam) {
-            if (this.state.answer[i] !== undefined) {
-                pickCount++
-            }
-        }
-        return pickCount + '/' + this.state.exam.length
-    }
-
-    getTimerBG() {
-        if (this.state.isTimeOut) {
-            return '#ffafaf'
-        }
-        else if (this.state.fullTimer * 60 * 0.5 < this.state.timer) {
-            return '#b3e0d7'
-        }
-        else if (this.state.fullTimer * 60 * 0.25 < this.state.timer) {
-            return '#f0f190'
-        }
-        else {
-            return '#ffc879'
-        }
     }
 
     logout() {
@@ -519,75 +454,6 @@ class Test extends Component {
             })
     }
 
-    getRoomListTxt(grade, rooms) {
-        let txt = ''
-        for (let i in rooms) {
-            txt += (word[window.language].m + grade + '/' + rooms[i] + ', ')
-        }
-        return txt.slice(0, -2)
-    }
-
-    getMedia(media, isQuestion) {
-        if (media.type === 'image') {
-            let imageBox = { marginBottom: isQuestion ? 20 : 0, marginTop: isQuestion ? 0 : 10 }
-            let imageStyle = { height: isQuestion ? '30vh' : 'auto', width: isQuestion ? 'auto' : '18vw', borderRadius: 7 }
-            return <div style={imageBox}>
-                <img src={'http://student.questionquick.com:11948' + media.path} alt={''} style={imageStyle} />
-            </div>
-        }
-        else if (media.type === 'video') {
-            let videoBox = { width: isQuestion ? '40.8vw' : '17vw', marginBottom: isQuestion ? 20 : 0, margin: 'auto', marginTop: isQuestion ? 0 : 10, borderRadius: 7, overflow: 'hidden' }
-            let videoStyle = { width: isQuestion ? '40.8vw' : '17vw', }
-            return <div style={videoBox}>
-                <Player
-                    controls
-                    fluid
-                    style={videoStyle}
-                    width={isQuestion ? '40.8vw' : '17vw'}
-                    height={isQuestion ? '24vw' : '10vw'}
-                    poster={'http://student.questionquick.com:11948' + media.path.replace('mp4', 'png')}
-                    src={'hhttp://student.questionquick.com:11948' + media.path}
-                />
-            </div>
-        }
-        else if (media.type === 'audio') {
-            let audioBox = { width: isQuestion ? '30vw' : '18vw', marginBottom: isQuestion ? 20 : 0, margin: 'auto', marginTop: isQuestion ? 0 : 10 }
-            let audioStyle = { width: '100%' }
-            return <div style={audioBox}>
-                <ReactAudioPlayer
-                    style={audioStyle}
-                    src={'http://student.questionquick.com:11948' + media.path}
-                    autoPlay={false}
-                    controls
-                    controlsList="nodownload"
-                />
-            </div>
-        }
-    }
-
-    getDateTxt(d) {
-        let date = new Date(d)
-        return ('0' + date.getDate()).slice(-2) + '/' + ('0' + (date.getMonth() + 1)).slice(-2) + '/' + date.getFullYear() + ' ' + ('0' + date.getHours()).slice(-2) + ':' + ('0' + date.getMinutes()).slice(-2) + ' น.'
-    }
-
-    getDurationTxt(duration) {
-        var h = Math.floor(duration / 60);
-        var m = duration % 60;
-        let txt = ''
-        if (h !== 0) {
-            txt += h + ' ' + word[window.language].hour + ' ';
-        }
-        if (m !== 0) {
-            txt += m + ' ' + word[window.language].minute
-        }
-        return txt
-    }
-
-    isAvailable(start, end) {
-        let now = Date.now()
-        return now > Date.parse(start) && now < Date.parse(end)
-    }
-
     pickExam() {
         let arrIndex1 = this.state.event.slice(0, this.state.event.indexOf('_'))
         let arrIndex2 = this.state.event.slice(this.state.event.indexOf('_') + 1)
@@ -603,7 +469,7 @@ class Test extends Component {
                     })
                     .then(res => res.json())
                     .then(exam => {
-                        console.log('exam data', exam, data, item)
+                        // console.log('exam data', exam, data, item)
                         this.setState({ /*: false,*/ exam, pickedQuiz: item, pickedQuizData: data, fullTimer: data.duration, timer: data.duration * 60, questionType: data.exam.type })
                     })
                     .catch(e => {
@@ -623,25 +489,178 @@ class Test extends Component {
         });
         console.log(answer)
 
-        this.setState({ isSendingAnswer: true }, () => {
-            fetch('http://student.questionquick.com/quiz/' + this.state.answersheet._id, {
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                method: 'PUT',
-                body: JSON.stringify({
-                    answers: answer
+        if (this.state.answersheet.message) {
+            alert(this.state.answersheet.message)
+        }
+        else {
+            this.setState({ isSendingAnswer: true }, () => {
+                fetch('http://student.questionquick.com/quiz/' + this.state.answersheet._id, {
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    method: 'PUT',
+                    body: JSON.stringify({
+                        answers: answer
+                    })
                 })
+                    .then(res => res.json())
+                    .then(json => {
+                        console.log('res', json)
+                        if (json.message) {
+                            throw new CodeError(json.message, 0);
+                        }
+                        else {
+                            alert('ส่งข้อสอบสำเร็จ')
+                            this.setState({ quizModal: false, pickedQuiz: null, pickedQuizData: null, isSendingAnswer: false, modal: false, answer: [], current: 0, isStart: false })
+                        }
+                    })
+                    .catch(err => {
+                        alert(err.message)
+                        this.setState({ quizModal: false, isSendingAnswer: false })
+                        console.log("err", err)
+                    })
             })
-                .then(res => res.json())
-                .then(json => {
-                    console.log('res', json)
-                    this.setState({ quizModal: false, pickedQuiz: null, pickedQuizData: null, isSendingAnswer: false, modal: false, answer: [], current: 0, isStart: false })
-                })
-                .catch(err => {
-                    this.setState({ quizModal: false, pickedQuiz: null, pickedQuizData: null, isSendingAnswer: false, modal: false, answer: [], current: 0, isStart: false })
-                    console.log("err", err)
-                })
-        })
+        }
+    }
+
+    videoJumper(i) {
+        if (this.refs.player && this.state.exam[i]) {
+            this.refs.player.seek(this.state.exam[i].second)
+        }
+    }
+
+    toggleDetail(id) {
+        if (this.state.detailPicked === id) {
+            this.setState({ detailPicked: null })
+        }
+        else {
+            this.setState({ detailPicked: id })
+        }
+    }
+
+    onTakePhoto(dataUri) {
+        // Do stuff with the dataUri photo...
+        console.log('takePhoto');
+    }
+
+    setMatchAnswer(q, a) {
+        let question = this.state.exam[this.state.current]
+        if (this.state.answer[this.state.current] && this.state.answer[this.state.current].multiChoice) {
+            let i = this.state.answer[this.state.current].multiChoice.findIndex(c => {return c.cid === q.cid})
+            if(i > -1){
+                this.state.answer[this.state.current].multiChoice[i] = { cid: q.cid, pid: a.pid }
+            }
+            else {
+                this.state.answer[this.state.current].multiChoice.push({ cid: q.cid, pid: a.pid })
+            }
+        }
+        else {
+            this.state.answer[this.state.current] = { qid: question.qid, multiChoice: [{ cid: q.cid, pid: a.pid }] }
+        }
+    }
+    ////ACTIVE////
+
+    ////GETTER////
+    isFinish() {
+        for (let i in this.state.exam) {
+            if (this.state.answer[i] === undefined || (this.state.exam[i].type === 'match' && this.state.answer[i] && this.state.exam[i].choices.length > this.state.answer[i].multiChoice.length)) {
+                return false
+            }
+        }
+        return true
+    }
+
+    isAvailable(start, end) {
+        let now = Date.now()
+        return now > Date.parse(start) && now < Date.parse(end)
+    }
+
+    getProgress() {
+        let pickCount = 0
+        for (let i in this.state.exam) {
+            if (this.state.answer[i] !== undefined) {
+                pickCount++
+            }
+        }
+        return pickCount + '/' + this.state.exam.length
+    }
+
+    getTimerBG() {
+        if (this.state.isTimeOut) {
+            return '#ffafaf'
+        }
+        else if (this.state.fullTimer * 60 * 0.5 < this.state.timer) {
+            return '#b3e0d7'
+        }
+        else if (this.state.fullTimer * 60 * 0.25 < this.state.timer) {
+            return '#f0f190'
+        }
+        else {
+            return '#ffc879'
+        }
+    }
+
+    getTimeTxt(sec) {
+        var sec_num = parseInt(sec, 10); // don't forget the second param
+        // var hours = Math.floor(sec_num / 3600);
+        var minutes = Math.floor(sec_num / 60);
+        var seconds = sec_num - (minutes * 60);
+
+        // if (hours < 10) { hours = "0" + hours; }
+        if (minutes < 10) { minutes = "0" + minutes; }
+        if (seconds < 10) { seconds = "0" + seconds; }
+
+        return /*hours + ':' +*/ minutes + ':' + seconds;
+    }
+
+    getRoomListTxt(grade, rooms) {
+        let txt = ''
+        for (let i in rooms) {
+            txt += (word[window.language].m + grade + '/' + rooms[i] + ', ')
+        }
+        return txt.slice(0, -2)
+    }
+
+    getMedia(media, isQuestion) {
+        if (media.type === 'image') {
+            let imageBox = { marginBottom: isQuestion ? 20 : 10, marginTop: isQuestion ? 0 : 10 }
+            let imageStyle = { height: isQuestion ? '30vh' : 'auto', width: isQuestion ? 'auto' : '18vw', borderRadius: 7 }
+            return <div style={imageBox}>
+                <img src={'http://student.questionquick.com' + media.path} alt={''} style={imageStyle} />
+            </div>
+        }
+        else if (media.type === 'video') {
+            let videoBox = { width: isQuestion ? '100%' : '17vw', height: isQuestion ? '45vh' : 'auto', marginBottom: isQuestion ? 20 : 10, margin: 'auto', marginTop: isQuestion ? 0 : 10, borderRadius: 7 }
+            // let videoStyle = { width: isQuestion ? '40.8vw' : '17vw', }
+            return <div style={videoBox}>
+                <Player
+                    controls
+                    fluid={!isQuestion}
+                    // style={videoStyle}
+                    width={isQuestion ? '100%' : '17vw'}
+                    height={isQuestion ? '100%' : '10vw'}
+                    poster={'http://student.questionquick.com' + media.path.replace('mp4', 'png')}
+                    src={'http://student.questionquick.com' + media.path}
+                />
+            </div>
+        }
+        else if (media.type === 'audio') {
+            let audioBox = { width: isQuestion ? '30vw' : '18vw', marginBottom: isQuestion ? 20 : 0, margin: 'auto', marginTop: isQuestion ? 0 : 10 }
+            let audioStyle = { width: '100%' }
+            return <div style={audioBox}>
+                <ReactAudioPlayer
+                    style={audioStyle}
+                    src={'http://student.questionquick.com' + media.path}
+                    autoPlay={false}
+                    controls
+                    controlsList="nodownload"
+                />
+            </div>
+        }
+    }
+
+    getDateTxt(d) {
+        let date = new Date(d)
+        return ('0' + date.getDate()).slice(-2) + '/' + ('0' + (date.getMonth() + 1)).slice(-2) + '/' + date.getFullYear() + ' ' + ('0' + date.getHours()).slice(-2) + ':' + ('0' + date.getMinutes()).slice(-2) + ' น.'
     }
 
     getOutOfTimeTxt(end, start) {
@@ -659,19 +678,89 @@ class Test extends Component {
         }
     }
 
-    toggleDetail(id) {
-        if (this.state.detailPicked === id) {
-            this.setState({ detailPicked: null })
+    getDurationTxt(duration) {
+        var h = Math.floor(duration / 60);
+        var m = duration % 60;
+        let txt = ''
+        if (h !== 0) {
+            txt += h + ' ' + word[window.language].hour + ' ';
         }
-        else {
-            this.setState({ detailPicked: id })
+        if (m !== 0) {
+            txt += m + ' ' + word[window.language].minute
         }
+        return txt
     }
 
+    getDefaultColor(i) {
+        let color = ['primary', 'secondary', 'success', 'info', 'warning', 'danger']
+        return color[i % 6]
+    }
+
+    getBarValue(a, data_) {
+        // console.log('1082',a, data)
+        let data = JSON.parse(JSON.stringify(data_))
+        // if(this.state.votedId){
+        //     data.find(d => {return d._id === this.state.votedId}).amount += 1
+        // }
+        let max = Math.max.apply(Math, data.map(function (o) { return o.amount; }))
+        return a / max * 100
+    }
+
+    getPercentValue(a, data_) {
+        let data = JSON.parse(JSON.stringify(data_))
+        // if(this.state.votedId){
+        //     data.find(d => {return d._id === this.state.votedId}).amount += 1
+        // }
+        let sum = data.reduce((a, b) => +a + +b.amount, 0);
+        return a / sum * 100
+    }
+
+    getAnswerData() {
+        console.log('vvvvvvvvvvvvvvvvvvvv answer data vvvvvvvvvvvvvvvvvvvv')
+        console.log('answer', this.state.answer)
+        console.log('answersheet', this.state.answersheet)
+        console.log('^^^^^^^^^^^^^^^^^^^^ answer data ^^^^^^^^^^^^^^^^^^^^')
+    }
+
+    getStartQuizBtn() {
+        if (this.state.focusExam === '') {
+            return (
+                <Button onClick={() => this.pickExam()} style={styles.startMainQuizBtn}>
+                    <span style={styles.startMainQuizBtnTxt}>{word[window.language].startQuiz}</span>
+                    <FontAwesomeIcon icon={faCaretRight} style={styles.startMainQuizBtnIco} />
+                </Button>
+            )
+        }
+        else if (!this.state.focusExam) {
+            return (
+                <Button disabled={true} style={styles.startMainQuizBtnDisable}>
+                    <span style={styles.startMainQuizBtnTxt}>{word[window.language].startQuiz}</span>
+                    <FontAwesomeIcon icon={faCaretRight} style={styles.startMainQuizBtnIco} />
+                </Button>
+            )
+        }
+        else {
+            return (
+                <Button disabled={true} style={{ ...styles.startMainQuizBtnDisable }}>
+                    <span style={{ ...styles.startMainQuizBtnTxt }}>{this.state.focusExam}</span>
+                    <FontAwesomeIcon icon={faCaretRight} style={{ ...styles.startMainQuizBtnIco }} />
+                </Button>
+            )
+        }
+    }
+    ////GETTER////
+
+    ////VIEW////
     chooseQuiz() {
         return (
             <div style={styles.chooseQuizContainer}>
-                <p style={styles.chooseQuizTopic}>{word[window.language].chooseExam}</p>
+                <div style={styles.chooseQuizTopicBox}>
+                    <p style={styles.chooseQuizTopic}>{word[window.language].chooseExam}</p>
+                    {/* <Button style={styles.qrCodeIconButton}>
+                        <FontAwesomeIcon icon={faQrcode} style={styles.qrCodeIcon} />
+                    </Button> */}
+                </div>
+
                 <div style={styles.cutLine} />
                 {this.state.isLoading ?
                     <div style={styles.answerContainerFullfill}>
@@ -679,10 +768,10 @@ class Test extends Component {
                     </div>
                     :
                     this.state.qstn.length > 0 ?
-                        <div style={{ display: 'flex', flex: 1, flexDirection: 'column' }}>
+                        <div style={styles.quizBox1}>
                             <div style={styles.chooseQuizDataBox}>
                                 {this.state.qstn.map((item, index) => {
-                                    let titleColor = index % 2 === '1' ? '#F0592B' : '#FAAE3C'
+                                    let titleColor = index % 2 === 1 ? '#F0592B' : '#FAAE3C'
                                     return (
                                         <div key={index} style={styles.quizBox}>
                                             <div style={{ ...styles.quizTitleContainer, borderColor: titleColor }}>
@@ -803,7 +892,12 @@ class Test extends Component {
                                     {this.state.exam.map((d, index) => {
                                         let diagramBtn = {}
                                         if (this.state.questionType === 'normal') {
-                                            diagramBtn = { width: '20px', height: '20px', border: this.state.current === index ? '2px solid #337ab7' : '2px solid transparent', backgroundColor: this.state.answer[index] !== undefined ? '#44b29c' : '#d9d5d5', marginTop: 2, marginLeft: 2, padding: 0 }
+                                            if (d.type === 'match') {
+                                                diagramBtn = { width: '20px', height: '20px', border: this.state.current === index ? '2px solid #337ab7' : '2px solid transparent', backgroundColor: this.state.answer[index] && this.state.answer[index].multiChoice.length === d.choices.length ? '#44b29c' : '#d9d5d5', marginTop: 2, marginLeft: 2, padding: 0 }
+                                            }
+                                            else {
+                                                diagramBtn = { width: '20px', height: '20px', border: this.state.current === index ? '2px solid #337ab7' : '2px solid transparent', backgroundColor: this.state.answer[index] !== undefined ? '#44b29c' : '#d9d5d5', marginTop: 2, marginLeft: 2, padding: 0 }
+                                            }
                                         }
                                         else if (this.state.questionType === 'video') {
                                             diagramBtn = { width: '20px', height: '20px', border: this.state.latestVideoIndex === index ? '2px solid #337ab7' : '2px solid transparent', backgroundColor: this.state.answer[index] !== undefined ? '#44b29c' : '#d9d5d5', marginTop: 2, marginLeft: 2, padding: 0 }
@@ -835,10 +929,13 @@ class Test extends Component {
                         </div>
                     </div>
                     <div style={styles.quizBox1_4}>
+                        <Button onClick={() => window.history.go(-1)} style={styles.closeExamBtn}>
+                            <FontAwesomeIcon icon={faTimes} style={styles.closeExamBtnIco} />
+                        </Button>
                         {!this.isFinish() ?
                             <Button onClick={() => this.setState({ modal: true })} style={styles.finishBtn1}>
                                 <span style={styles.finishBtnTxt1}>{word[window.language].submit}</span>
-                                <FontAwesomeIcon icon={faCaretRight} style={styles.finishBtnIco1} />
+                                <FontAwesomeIcon icon={faArrowAltCircleRight} style={styles.finishBtnIco1} />
                             </Button>
                             :
                             <Button onClick={() => this.setState({ modal: true })} style={styles.finishBtn2}>
@@ -880,7 +977,7 @@ class Test extends Component {
 
                     <div style={styles.examContainer}>
 
-                        {this.state.questionType === 'normal' && this.state.exam[this.state.current] && this.state.exam[this.state.current].choices && this.state.exam[this.state.current].choices.length > 0 ?
+                        {this.state.questionType === 'normal' && this.state.exam[this.state.current] && this.state.exam[this.state.current].choices && this.state.exam[this.state.current].choices.length > 0 && (this.state.exam[this.state.current].type === 'choice' || !this.state.exam[this.state.current].type) ?
                             //choice
                             <div style={styles.examContainerInner}>
                                 <span style={styles.question}>
@@ -936,11 +1033,9 @@ class Test extends Component {
                                 <span style={styles.question}>
                                     {this.state.exam[this.state.current] && this.state.exam[this.state.current].text}
                                 </span>
-                                <div >
-                                    {(this.state.exam[this.state.current] && this.state.exam[this.state.current].media) &&
-                                        this.getMedia(this.state.exam[this.state.current].media, true)
-                                    }
-                                </div>
+                                {(this.state.exam[this.state.current] && this.state.exam[this.state.current].media) &&
+                                    this.getMedia(this.state.exam[this.state.current].media, true)
+                                }
                                 <div style={styles.answerContainer}>
                                     <Input
                                         type="textarea"
@@ -972,7 +1067,7 @@ class Test extends Component {
                             null
                         }
 
-                        {this.state.examType === 1 && false ?
+                        {this.state.questionType === 'normal' && this.state.exam[this.state.current] && this.state.exam[this.state.current].choices && this.state.exam[this.state.current].choices.length > 0 && this.state.exam[this.state.current].type === 'match' ?
                             //match and order
                             <div style={styles.examContainerInner}>
                                 <span style={styles.question}>
@@ -984,21 +1079,24 @@ class Test extends Component {
                                     }
                                 </div>
                                 <div style={{ ...styles.answerContainer }}>
-                                    <div style={{ display: 'flex', flexDirection: 'row', width: '100%' }}>
-                                        <div style={{ width: '50%', justifyContent: 'center' }}>
+                                    <div style={styles.answerMatchContainer}>
+                                        <div style={styles.matchBtn}>
                                             <p style={styles.text} color={'danger'}>{word[window.language].article}</p>
                                         </div>
-                                        <div style={{ width: '50%', justifyContent: 'center' }}>
+                                        <div style={styles.matchBtn}>
                                             <p style={styles.text} color={'success'}>{word[window.language].answer}</p>
                                         </div>
                                     </div>
-                                    {matchingAnswerExp.article.map((item, index) => {
+                                    {this.state.exam[this.state.current].choices.map((item, index) => {
+                                        let answer = this.state.answer[this.state.current] && this.state.answer[this.state.current].multiChoice.find(p => { return p.cid === item.cid })
+                                        // console.log(index, answer, this.state.exam[this.state.current].pair)
                                         return (
-                                            <div key={index} style={{ display: 'flex', flexDirection: 'row', width: '100%' }}>
-                                                <div style={{ width: '50%', justifyContent: 'center' }}>
-                                                    <Button style={styles.matchingBtn} outline color="danger" disabled>{item.value}</Button>
+                                            <div key={index} style={styles.answerMatchContainer}>
+                                                <div style={styles.matchBtn}>
+                                                    <Button style={styles.matchingBtn} /*outline*/ color="danger" disabled>{item.text}</Button>
                                                 </div>
-                                                <div style={{ width: '50%', justifyContent: 'center' }}>
+                                                <FontAwesomeIcon icon={faArrowsAltH} style={{ ...styles.startMainQuizBtnIco, color: '#aaa' }} />
+                                                <div style={styles.matchBtn}>
                                                     {/* <Button style={styles.matchingBtn} outline color="success">123456798</Button> */}
                                                     <Dropdown
                                                         isOpen={this.state.matchingDropdownOpenIndex === index}
@@ -1006,27 +1104,30 @@ class Test extends Component {
                                                             this.setState({ matchingDropdownOpenIndex: this.state.matchingDropdownOpenIndex === index ? -1 : index })
                                                         }}
                                                     >
-                                                        <DropdownToggle style={{ ...styles.matchingBtn, color: !this.state.matchingAnswer[index].answer ? '#ccc' : 'green' }} outline color="success">
-                                                            {this.state.matchingAnswer[index].answer ? this.state.matchingAnswer[index].answer.value : '-'}
+                                                        <DropdownToggle style={{ ...styles.matchingBtn, color: !answer ? '#ccc' : 'green' }} outline color="success">
+                                                            {answer ? this.state.exam[this.state.current].pair.find(p => { return p.pid === answer.pid }).text : '-'}
                                                         </DropdownToggle>
-                                                        <DropdownMenu style={{ width: '98%', marginBottom: '10px', marginRight: '2%' }}>
-                                                            {matchingAnswerExp.answer.map((item_a, index_a) => {
+                                                        <DropdownMenu style={styles.dropdownMenu}>
+                                                            {this.state.exam[this.state.current].pair.map((item_a, index_a) => {
                                                                 return (
                                                                     <DropdownItem
                                                                         key={index_a}
                                                                         onClick={() => {
-                                                                            this.state.matchingAnswer[index].answer = item_a
-                                                                            // this.forceUpdate()
+                                                                            this.setMatchAnswer(item, item_a)
                                                                         }}
                                                                         style={{ textAlign: 'center' }}
                                                                     >
-                                                                        {item_a.value}
+                                                                        {item_a.text}
                                                                     </DropdownItem>
                                                                 )
                                                             })}
                                                             <DropdownItem
                                                                 onClick={() => {
-                                                                    this.state.matchingAnswer[index].answer = null
+                                                                    let i = this.state.answer[this.state.current] && this.state.answer[this.state.current].multiChoice.findIndex(a => { return a.cid === item.cid })
+                                                                    if (i > -1) {
+                                                                        this.state.answer[this.state.current].multiChoice.splice(i, 1)
+                                                                        this.forceUpdate()
+                                                                    }
                                                                 }}
                                                                 style={{ textAlign: 'center' }}
                                                             >
@@ -1047,63 +1148,72 @@ class Test extends Component {
                         {this.state.questionType === 'video' ?
                             //video
                             <div style={styles.examContainerInner}>
-                                <div style={{ width: '51vw', marginBottom: 20, marginLeft: 'auto', marginRight: 'auto', marginTop: 0 }}>
+                                <div style={styles.videoExamPlayerContainer}>
                                     <Player
                                         ref="player"
                                         startTime={0}
                                         controls
-                                        fluid
-                                        style={{ width: '51vw' }}
-                                        width={'51vw'}
-                                        height={'30vw'}
-                                        poster={'http://student.questionquick.com:11948' + this.state.pickedQuizData.exam.media.path.replace('.mp4', '.png')}
+                                        fluid={false}
+                                        width={'100%'}
+                                        height={'100%'}
+                                        poster={'http://student.questionquick.com' + this.state.pickedQuizData.exam.media.path.replace('.mp4', '.png')}
                                         src={'http://student.questionquick.com' + this.state.pickedQuizData.exam.media.path}
                                     />
                                 </div>
-                                <span style={styles.question}>
-                                    {this.state.exam[this.state.latestVideoIndex] && this.state.exam[this.state.latestVideoIndex].text}
-                                </span>
-                                <div style={styles.answerContainer}>
-                                    {this.state.exam[this.state.latestVideoIndex] && this.state.exam[this.state.latestVideoIndex].choices.map((c, index) => {
-                                        let timeoutOpacity = this.state.isTimeOut ? 0.5 : 1
-                                        let btnStyle = { width: '97%', backgroundColor: JSON.stringify(this.state.answer[this.state.latestVideoIndex]) === JSON.stringify({ "qid": this.state.exam[this.state.latestVideoIndex].qid, "cid": c.cid }) ? '#2abaf0' : '#fff', border: '2px solid #2abaf0', padding: 0, borderRadius: 30, marginTop: 10 }
-                                        return (
-                                            <div key={index} style={{ ...styles.answerBtnContainer, opacity: timeoutOpacity }}>
-                                                <div style={styles.answerContainerInner}>
-                                                    <Button
-                                                        onClick={() => {
-                                                            if (JSON.stringify(this.state.answer[this.state.latestVideoIndex]) === JSON.stringify({ "qid": this.state.exam[this.state.latestVideoIndex].qid, "cid": c.cid })) {
-                                                                this.setState({ answer: { ...this.state.answer, [this.state.current]: undefined } })
-                                                            }
-                                                            else {
-                                                                this.setState({ answer: { ...this.state.answer, [this.state.latestVideoIndex]: { "qid": this.state.exam[this.state.latestVideoIndex].qid, "cid": c.cid } } })
-                                                                this.refs.player.play()
-                                                                // if (this.state.latestVideoIndex < this.state.exam.length - 1) {
-                                                                //     this.setState({ latestVideoIndex: this.state.latestVideoIndex + 1 })
-                                                                // }
-                                                                // else {
-                                                                //     this.forceUpdate()
-                                                                // }
-                                                            }
-                                                        }}
-                                                        disabled={this.state.isTimeOut}
-                                                        style={btnStyle}
-                                                    >
-                                                        <span style={styles.answerTxt}>{c.text}</span>
-                                                    </Button>
-                                                    {c.media && this.getMedia(c.media, false)}
-                                                </div>
-                                                <div style={styles.answerContainerFullfill} />
-                                            </div>
-                                        )
-                                    })}
-                                </div>
+                                {this.state.latestVideoIndex > -1 ?
+                                    <div>
+                                        <div style={styles.cutLine} />
+                                        <span style={styles.question}>
+                                            {this.state.exam[this.state.latestVideoIndex] && this.state.exam[this.state.latestVideoIndex].text}
+                                        </span>
+                                        <div style={styles.answerContainer}>
+                                            {this.state.exam[this.state.latestVideoIndex] && this.state.exam[this.state.latestVideoIndex].choices.map((c, index) => {
+                                                let timeoutOpacity = this.state.isTimeOut ? 0.5 : 1
+                                                let btnStyle = { width: '97%', backgroundColor: JSON.stringify(this.state.answer[this.state.latestVideoIndex]) === JSON.stringify({ "qid": this.state.exam[this.state.latestVideoIndex].qid, "cid": c.cid }) ? '#2abaf0' : '#fff', border: '2px solid #2abaf0', padding: 0, borderRadius: 30, marginTop: 10 }
+                                                return (
+                                                    <div key={index} style={{ ...styles.answerBtnContainer, opacity: timeoutOpacity }}>
+                                                        <div style={styles.answerContainerInner}>
+                                                            <Button
+                                                                onClick={() => {
+                                                                    if (JSON.stringify(this.state.answer[this.state.latestVideoIndex]) === JSON.stringify({ "qid": this.state.exam[this.state.latestVideoIndex].qid, "cid": c.cid })) {
+                                                                        this.setState({ answer: { ...this.state.answer, [this.state.current]: undefined } })
+                                                                    }
+                                                                    else {
+                                                                        this.setState({ answer: { ...this.state.answer, [this.state.latestVideoIndex]: { "qid": this.state.exam[this.state.latestVideoIndex].qid, "cid": c.cid } } })
+                                                                        this.refs.player.play()
+                                                                        // if (this.state.latestVideoIndex < this.state.exam.length - 1) {
+                                                                        //     this.setState({ latestVideoIndex: this.state.latestVideoIndex + 1 })
+                                                                        // }
+                                                                        // else {
+                                                                        //     this.forceUpdate()
+                                                                        // }
+                                                                    }
+                                                                }}
+                                                                disabled={this.state.isTimeOut}
+                                                                style={btnStyle}
+                                                            >
+                                                                <span style={styles.answerTxt}>{c.text}</span>
+                                                            </Button>
+                                                            {c.media && this.getMedia(c.media, false)}
+                                                        </div>
+                                                        <div style={styles.answerContainerFullfill} />
+                                                    </div>
+                                                )
+                                            })}
+                                        </div>
+                                    </div>
+                                    :
+                                    <div>
+                                        <div style={styles.cutLine} />
+                                        <span style={{ color: '#aaa' }}>{word[window.language].notHaveQuestionYet}</span>
+                                    </div>
+                                }
                             </div>
                             :
                             null
                         }
 
-                        {this.state.examType === 1 && false ?
+                        {false ?
                             //voting
                             <div style={styles.examContainerInner}>
                                 <span style={styles.question}>
@@ -1114,34 +1224,49 @@ class Test extends Component {
                                         this.getMedia(this.state.exam[this.state.current].media, true)
                                     }
                                 </div>
-                                <div style={{ ...styles.answerContainer, display: 'flex', flexDirection: 'column', marginLeft: '10px', marginRight: '10px' }}>
+                                <div style={{ ...styles.answerContainer, display: 'flex', flexDirection: 'column', marginLeft: '10px', marginRight: '10px', flex: 1 }}>
+                                    <span style={{ textAlign: 'right', color: '#aaa' }}>{word[window.language].onlyPickOne}</span>
                                     {votingData.map((item, index) => {
                                         return (
-                                            <div key={index} style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', marginBottom: '5px' }}>
+                                            <div key={index} style={styles.votingContainer}>
                                                 <Button
                                                     outline={this.state.votedId && this.state.votedId === item._id ? false : true}
                                                     color={this.getDefaultColor(index)}
-                                                    style={{ width: '200px', marginRight: '5px', height: '50px' }}
+                                                    style={styles.votingBtn}
                                                     onClick={() => this.setState({ votedId: item._id })}
-                                                    disabled={this.state.votedId && this.state.votedId !== item._id ? true : false}
+                                                    disabled={/*this.state.votedId && this.state.votedId !== item._id ? true : false*/this.state.isVoteSubmited}
                                                 >
                                                     {item.value}
                                                 </Button>
-                                                <Progress multi style={{ width: '100%', height: '50px' }}>
-                                                    <Progress bar animated color={this.getDefaultColor(index)} value={this.getBarValue(item.amount, votingData)}>
-                                                        <span style={{ marginLeft: '10px' }}>{item.amount + ' (' + this.getPercentValue(item.amount, votingData).toFixed(2) + '%)'} </span>
+                                                {this.state.isVoteSubmited ?
+                                                    <Progress multi style={styles.votingProgress}>
+                                                        <Progress bar animated color={this.getDefaultColor(index)} value={this.getBarValue(item.amount, votingData)}>
+                                                            <span style={{ marginLeft: '10px' }}>{item.amount + ' (' + this.getPercentValue(item.amount, votingData).toFixed(2) + '%)'} </span>
+                                                        </Progress>
                                                     </Progress>
-                                                </Progress>
+                                                    :
+                                                    <Progress multi style={styles.votingProgress}>
+                                                        <Progress bar animated color={this.getDefaultColor(index)} value={1}>
+                                                            <span style={{ marginLeft: '10px' }}></span>
+                                                        </Progress>
+                                                    </Progress>
+                                                }
                                             </div>
                                         )
                                     })}
+                                </div>
+                                <div style={{ height: 1, width: '100%', backgroundColor: '#ddd' }} />
+                                <div>
+                                    <Button onClick={() => this.setState({ isVoteSubmited: true })} color="primary" disabled={!this.state.votedId} block style={{ marginTop: 10, marginBottom: 10, justifyContent: 'center', alignItems: 'center', height: 60 }}>
+                                        <span style={{ ...styles.text, color: '#fff' }}>ส่งคำตอบ</span>
+                                    </Button>
                                 </div>
                             </div>
                             :
                             null
                         }
 
-                        {this.state.examType === 1 && false ?
+                        {false ?
                             //answer template
                             <div style={styles.examContainerInner}>
                                 <span style={styles.question}>
@@ -1192,37 +1317,9 @@ class Test extends Component {
             </div>
         )
     }
+    ////VIEW////
 
-    videoJumper(i) {
-        if(this.state.exam[i]){
-            this.refs.player.seek(this.state.exam[i].second)
-        }
-    }
-
-    getDefaultColor(i) {
-        let color = ['primary', 'secondary', 'success', 'info', 'warning', 'danger']
-        return color[i % 6]
-    }
-
-    getBarValue(a, data_) {
-        // console.log('1082',a, data)
-        let data = JSON.parse(JSON.stringify(data_))
-        // if(this.state.votedId){
-        //     data.find(d => {return d._id === this.state.votedId}).amount += 1
-        // }
-        let max = Math.max.apply(Math, data.map(function (o) { return o.amount; }))
-        return a / max * 100
-    }
-
-    getPercentValue(a, data_) {
-        let data = JSON.parse(JSON.stringify(data_))
-        // if(this.state.votedId){
-        //     data.find(d => {return d._id === this.state.votedId}).amount += 1
-        // }
-        let sum = data.reduce((a, b) => +a + +b.amount, 0);
-        return a / sum * 100
-    }
-
+    ////MODAL////
     stopQuizModal() {
         return (
             <Modal isOpen={this.state.quizModal} toggle={() => this.setState({ quizModal: false })}>
@@ -1236,13 +1333,6 @@ class Test extends Component {
                 </ModalFooter>
             </Modal>
         )
-    }
-
-    getAnswerData() {
-        console.log('vvvvvvvvvvvvvvvvvvvv answer data vvvvvvvvvvvvvvvvvvvv')
-        console.log('answer', this.state.answer)
-        console.log('answersheet', this.state.answersheet)
-        console.log('^^^^^^^^^^^^^^^^^^^^ answer data ^^^^^^^^^^^^^^^^^^^^')
     }
 
     startExamModal() {
@@ -1286,33 +1376,7 @@ class Test extends Component {
             </Modal>
         )
     }
-
-    getStartQuizBtn() {
-        if (this.state.focusExam === '') {
-            return (
-                <Button onClick={() => this.pickExam()} style={styles.startMainQuizBtn}>
-                    <span style={styles.startMainQuizBtnTxt}>{word[window.language].startQuiz}</span>
-                    <FontAwesomeIcon icon={faCaretRight} style={styles.startMainQuizBtnIco} />
-                </Button>
-            )
-        }
-        else if (!this.state.focusExam) {
-            return (
-                <Button disabled={true} style={styles.startMainQuizBtnDisable}>
-                    <span style={styles.startMainQuizBtnTxt}>{word[window.language].startQuiz}</span>
-                    <FontAwesomeIcon icon={faCaretRight} style={styles.startMainQuizBtnIco} />
-                </Button>
-            )
-        }
-        else {
-            return (
-                <Button disabled={true} style={{ ...styles.startMainQuizBtnDisable }}>
-                    <span style={{ ...styles.startMainQuizBtnTxt }}>{this.state.focusExam}</span>
-                    <FontAwesomeIcon icon={faCaretRight} style={{ ...styles.startMainQuizBtnIco }} />
-                </Button>
-            )
-        }
-    }
+    ////MODAL////
 
     render() {
         if (this.state.redirectHome) {
@@ -1321,41 +1385,27 @@ class Test extends Component {
 
         if (!this.state.isFoundVideoRef && this.refs && this.refs.player) {
             this.setState({ isFoundVideoRef: true }, () => {
-                this.refs.player.subscribeToStateChange(this.handleStateChange.bind(this));
+                this.refs.player.subscribeToStateChange(this.handleVideoStateChange.bind(this));
             })
         }
 
         return (
             <div className="login loginContainer">
                 <SideNav isQuizStart={this.state.isStart} page={'home'} />
+                <Alert isOpen={Boolean(this.state.toastData)} color="danger" style={{ position: 'absolute', width: '100%' }}>
+                    {this.state.toastData}
+                </Alert>
                 {this.state.isLoading &&
                     <div style={styles.loadingContainer}>
                         <Spinner type="grow" color="warning" style={styles.loading} />
                     </div>
                 }
                 <div className='quizBox'>
-                    {/* {!this.state.pickedQuiz ?
-                        this.chooseQuiz()
-                        :
-                        !this.state.isStart ?
-                            this.quizDetail()
-                            :
-                            this.quiz()
-                    } */}
-
                     {!this.state.pickedQuiz || !this.state.isStart ?
                         this.chooseQuiz()
                         :
                         this.quiz()
                     }
-                    <Toast style={styles.Toast} isOpen={Boolean(this.state.toastData)}>
-                        <ToastHeader>
-                            Warning
-                        </ToastHeader>
-                        <ToastBody>
-                            {this.state.toastData}
-                        </ToastBody>
-                    </Toast>
                     <img src={require('../image/decorate02.png')} style={styles.decorateLeft} alt={'decorate02'} />
                     <img src={require('../image/decorate01.png')} style={styles.decorateRight} alt={'decorate01'} />
                 </div>
@@ -1372,7 +1422,7 @@ const styles = {
     loading: { width: '3rem', height: '3rem' },
     quizTitleContainer: { borderWidth: 5, borderStyle: 'solid', borderRadius: '20px', overflow: 'hidden' },
     quizTitleBox: { overflow: 'hidden', justifyContent: 'center', alignItems: 'center', width: '100%', borderWidth: 0, flexDirection: 'row', display: 'flex' },
-    quizBox: { borderRadius: 10, /*borderWidth: 5, borderStyle: 'solid', borderColor: '#2abaf0', */width: '95%', padding: '5px', marginLeft: 'auto', marginRight: 'auto', marginBottom: '20px', },
+    quizBox: { borderRadius: 10, /*borderWidth: 5, borderStyle: 'solid', borderColor: '#2abaf0', */width: '98%', padding: '5px', marginLeft: 'auto', marginRight: 'auto', marginBottom: '20px', },
     quizeventsContainer: { display: 'flex', flexDirection: 'row', alignItems: 'center', flex: 1, width: '100%', backgroundColor: 'transparent', borderWidth: 0, textDecoration: 'none' },
     quizeventsContainerInner: { display: 'flex', flexDirection: 'column', flex: 1 },
     quizeventsBox: { display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 5 },
@@ -1380,8 +1430,11 @@ const styles = {
     outOffTimeTxt: { color: 'red', fontSize: '24px', fontFamily: 'DBH' },
     text: { color: '#000', fontFamily: 'DBH', fontSize: '24px' },
 
-    chooseQuizContainer: { zIndex: 2, width: '80vw', height: '80vh', backgroundColor: '#fff', alignSelf: 'center', borderRadius: 20, display: 'flex', flexDirection: 'column', marginLeft: '60px' },
+    chooseQuizContainer: { zIndex: 2, width: '85vw', height: '85vh', backgroundColor: '#fff', alignSelf: 'center', borderRadius: 20, display: 'flex', flexDirection: 'column', marginLeft: '60px' },
+    chooseQuizTopicBox: { display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     chooseQuizTopic: { color: '#ff5f6d', fontFamily: 'DBH', fontSize: '45px', alignSelf: 'flex-start', margin: 0, marginLeft: 30 },
+    qrCodeIconButton: { marginRight: 50 },
+    qrCodeIcon: {},
     chooseQuizDataBox: { display: 'flex', flex: 1, flexDirection: 'column', overflowY: 'scroll' },
     quizTitle: { color: '#000', fontFamily: 'DBH', fontSize: '30px', margin: 5 },
     quizTitleIco: { width: '24px', fontSize: '24px', color: '#000' },
@@ -1395,7 +1448,7 @@ const styles = {
     pickQuizBtn: { height: 40, paddingTop: 0, paddingBottom: 0 },
     startQuizTxt: { color: '#fff', fontFamily: 'DBH', fontSize: '24px', margin: 0 },
 
-    quizDetailContainer: { zIndex: 2, width: '80vw', height: '80vh', backgroundColor: '#fff', alignSelf: 'center', borderRadius: 20, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', marginLeft: '60px' },
+    quizDetailContainer: { zIndex: 2, width: '85vw', height: '85vh', backgroundColor: '#fff', alignSelf: 'center', borderRadius: 20, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', marginLeft: '60px' },
     quizDetailTxt1: { color: '#ff5f6d', fontFamily: 'DBH', fontSize: '45px' },
     quizDetailTxt2: { color: '#ff5f6d', fontFamily: 'DBH', fontSize: '30px' },
     quizDetailTxt3: { color: '#7fd642', fontFamily: 'DBH', fontSize: '30px' },
@@ -1403,10 +1456,10 @@ const styles = {
     quizDetailDescBox: { marginTop: 20, display: 'flex', flexDirection: 'column' },
     quizDetailTopic1: { color: '#555' },
     quizDetailTopic2: { color: '#337ab7', fontFamily: 'DBH', fontSize: '30px' },
-    startMainQuizBtn: { width: '30vw', height: '60px', background: '#f1683e', borderWidth: 0, padding: 0, borderRadius: '2vw', margin: 10, alignSelf: "center" },
+    startMainQuizBtn: { width: '98%', height: '60px', background: '#f1683e', borderWidth: 0, padding: 0, borderRadius: '30px', margin: 10, alignSelf: "center" },
     startMainQuizBtnTxt: { fontFamily: 'DBH', color: '#fff', fontWeight: 'bolder', fontSize: '34px' },
     startMainQuizBtnIco: { width: '2vw', fontSize: '24px', color: '#fff' },
-    startMainQuizBtnDisable: { width: '30vw', height: '60px', background: '#ccc', borderWidth: 0, padding: 0, borderRadius: '2vw', margin: 10, alignSelf: "center" },
+    startMainQuizBtnDisable: { width: '98%', height: '60px', background: '#ccc', borderWidth: 0, padding: 0, borderRadius: '30px', margin: 10, alignSelf: "center" },
     startQuizBtn: { width: '130px', height: '35px', background: '#f1683e', borderWidth: 2, padding: 0, borderRadius: '2vw', alignSelf: "center", borderColor: '#f1683e', borderStyle: 'solid', },
     startQuizBtnTxt: { fontFamily: 'DBH', color: '#fff', fontWeight: 'bolder', fontSize: '24px' },
     startQuizBtnIco: { width: '2vw', fontSize: '24px', color: '#fff' },
@@ -1414,7 +1467,7 @@ const styles = {
     backPickQuizBtnTxt: { fontFamily: 'DBH', color: '#aaa', fontWeight: 'bolder', fontSize: '24px' },
     backPickQuizBtnIco: { width: '2vw', fontSize: '24px', color: '#aaa' },
 
-    quizContainer: { zIndex: 2, width: '85vw', height: '80vh', backgroundColor: '#fff', alignSelf: 'center', borderRadius: 20, display: 'flex', flexDirection: 'row', marginLeft: '60px' },
+    quizContainer: { zIndex: 2, width: '85vw', height: '85vh', backgroundColor: '#fff', alignSelf: 'center', borderRadius: 20, display: 'flex', flexDirection: 'row', marginLeft: '60px' },
     quizBox1: { display: 'flex', flex: 1, flexDirection: 'column' },
     quizBox1_1: { display: 'flex', flexDirection: 'column', backgroundColor: '#98def8', marginBottom: 10, marginTop: 10, marginLeft: 10, border: '2px solid #23b8f0', borderRadius: 10, overflow: 'hidden' },
     quizBox1_1Topic: { fontFamily: 'DBH', color: '#1c5379', alignSelf: 'center', fontSize: '24px', flex: 1, fontWeight: 500, margin: 0 },
@@ -1442,31 +1495,40 @@ const styles = {
     diagramDescBtn2: { width: '1.5vw', height: '1.5vw', backgroundColor: '#44b29c', marginTop: 2, marginLeft: 2, padding: 0, borderRadius: 3, marginRight: 5 },
     diagramDescBtn3: { width: '1.5vw', height: '1.5vw', backgroundColor: '#d9d5d5', marginTop: 2, marginLeft: 2, padding: 0, borderRadius: 3, marginRight: 5 },
     diagramDescBtnTxt: { fontFamily: 'DBH', fontSize: '20px', fontWeight: '500', marginTop: 5 },
-    quizBox1_4: { alignSelf: 'center', marginBottom: 10, marginLeft: 10, width: '95%' },
-    finishBtn1: { width: '100%', background: '#ffe00f', marginLeft: 2, borderWidth: 0, padding: 0, borderRadius: 30, marginRight: 10 },
-    finishBtn2: { width: '100%', background: '#6ebb1f', marginLeft: 2, borderWidth: 0, padding: 0, borderRadius: 30, marginRight: 10 },
+    quizBox1_4: { alignSelf: 'center', marginBottom: 10, marginLeft: 10, width: '95%', display: 'flex', flexDirection: 'row' },
+    closeExamBtn: { width: 60, height: 50, borderRadius: 25, marginRight: 5, backgroundColor: 'red', borderWidth: 0 },
+    finishBtn1: { width: '100%', background: '#ffe00f', marginLeft: 2, borderWidth: 0, padding: 0, height: 50, borderRadius: 25 },
+    finishBtn2: { width: '100%', background: '#6ebb1f', marginLeft: 2, borderWidth: 0, padding: 0, height: 50, borderRadius: 25 },
     finishBtnTxt1: { fontFamily: 'DBH', fontWeight: 500, color: '#000', fontSize: '30px' },
     finishBtnTxt2: { fontFamily: 'DBH', fontWeight: 500, color: '#fff', fontSize: '30px' },
-    finishBtnIco1: { width: '1.75vw', fontSize: '24px', color: '#000' },
-    finishBtnIco2: { width: '1.75vw', fontSize: '24px', color: '#fff' },
+    closeExamBtnIco: { fontSize: '20px', color: '#fff', },
+    finishBtnIco1: { fontSize: '20px', color: '#000', marginLeft: 5 },
+    finishBtnIco2: { fontSize: '20px', color: '#fff', marginLeft: 5 },
     quizBox2: { display: 'flex', flexDirection: 'column', flex: 4 },
     examTopicContainer: { display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
     examTopicTxt: { fontFamily: 'DBH', fontWeight: 'bolder', color: '#ff5f6d', fontSize: '34px', textAlign: 'left', marginTop: 12, marginLeft: 20 },
     examRouter: { display: 'flex', flexDirection: 'row', alignItems: 'center', alignSelf: 'center' },
-    routerBtn: { width: '12vw', background: '#f1673e', marginTop: 2, marginLeft: 2, borderWidth: 0, padding: 0, borderRadius: 30, margin: 10, alignSelf: "center" },
-    routerBtnDisable: { width: '12vw', background: '#aaa', marginTop: 2, marginLeft: 2, borderWidth: 0, padding: 0, borderRadius: 30, margin: 10, alignSelf: "center" },
+    routerBtn: { width: '150px', background: '#f1673e', marginTop: 2, marginLeft: 2, borderWidth: 0, padding: 0, borderRadius: 30, margin: 10, alignSelf: "center" },
+    routerBtnDisable: { width: '150px', background: '#aaa', marginTop: 2, marginLeft: 2, borderWidth: 0, padding: 0, borderRadius: 30, margin: 10, alignSelf: "center" },
     routerBtnIco: { width: '1.75vw', fontSize: '24px' },
     routerBtnTxt: { fontFamily: 'DBH', fontWeight: 500, color: '#fff', fontSize: '30px' },
     examContainer: { display: 'flex', flex: 1, flexDirection: 'column', backgroundColor: '#fff', margin: 10, marginTop: 0, border: '2px solid #ff5f6d', borderRadius: 10, overflow: 'hidden' },
-    examContainerInner: { overflowY: 'scroll', display: 'flex', flex: 1, flexDirection: 'column', marginTop: '5px' },
-    question: { fontFamily: 'DBH', fontSize: '30px', fontWeight: 500, textAlign: 'left', marginLeft: 10, marginBottom: 20, color: '#1c5379' },
-    answerContainer: { display: 'flex', /*flex: 1,*/ flexWrap: 'wrap', flexDirection: 'row', marginTop: 10 },
+    examContainerInner: { overflowY: 'scroll', display: 'flex', flex: 1, paddingLeft: '10px', width: '100%', flexDirection: 'column', marginTop: '5px' },
+    videoExamPlayerContainer: { width: '100%', height: '45vh', marginBottom: 10, marginLeft: 'auto', marginRight: 'auto', marginTop: 5 },
+    question: { fontFamily: 'DBH', fontSize: '30px', fontWeight: 500, textAlign: 'left', marginLeft: 10, marginBottom: 10, display: 'flex', color: '#1c5379' },
+    answerContainer: { display: 'flex', /*flex: 1,*/ flexWrap: 'wrap', flexDirection: 'row' },
+    answerMatchContainer: { display: 'flex', flexDirection: 'row', width: '100%', alignItems: 'center' },
     answerTextInput: { resize: 'none', display: 'flex', flex: 1, marginLeft: '15px', marginRight: '5px', height: '200px', marginTop: '10px', marginBottom: '10px' },
     answerBtnContainer: { width: '45%', marginBottom: 20, marginLeft: '2.5%', },
     answerContainerInner: { backgroundColor: '#eee', borderRadius: 30, paddingBottom: 10 },
     answerTxt: { fontFamily: 'DBH', fontWeight: 500, color: '#1c5379', fontSize: '30px' },
     answerContainerFullfill: { display: 'flex', flex: 1 },
-    matchingBtn: { fontFamily: 'DBH', fontSize: '25px', width: '75%', marginBottom: '20px', height: '50px', borderRadius: '25px' },
+    matchBtn: { width: '100%', justifyContent: 'center' },
+    matchingBtn: { fontFamily: 'DBH', fontSize: '25px', width: '75%', marginBottom: '10px', marginTop: '10px', height: '50px', borderRadius: '25px' },
+    dropdownMenu: { width: '98%', marginBottom: '10px', marginRight: '2%' },
+    votingContainer: { display: 'flex', flexDirection: 'row', alignItems: 'center', marginBottom: '5px' },
+    votingBtn: { width: '200px', marginRight: '5px', height: '50px' },
+    votingProgress: { width: '100%', height: '50px' },
     sendingAnswerLoading: { width: '3rem', height: '3rem', margin: 'auto' },
     sendingAnswerTxt: { color: '#1c5379', fontFamily: 'DBH', fontSize: '30px', fontWeight: '500' },
     sendingAnswerWarning: { color: 'red', fontFamily: 'DBH', fontSize: '30px', fontWeight: '500', display: 'flex', flexDirection: 'row', alignItems: 'center' },
@@ -1479,6 +1541,29 @@ const styles = {
     decorateRight: { bottom: 0, right: 0, position: 'absolute', width: '25vw' },
 
     Toast: { position: 'absolute' },
+
+    preview: {
+        position: 'relative',
+    },
+    captureContainer: {
+        display: 'flex',
+        position: 'absolute',
+        justifyContent: 'center',
+        zIndex: 1,
+        bottom: 0,
+        width: '100%'
+    },
+    captureButton: {
+        backgroundColor: '#fff',
+        borderRadius: '50%',
+        height: 56,
+        width: 56,
+        color: '#000',
+        margin: 20
+    },
+    captureImage: {
+        width: '100%',
+    }
 }
 
 export default Test;

@@ -60,14 +60,14 @@ export default class User extends Component {
     }
 
     componentDidMount() {
-        console.log('cdm')
+        // console.log('cdm')
         fetch('http://student.questionquick.com/profile',
             {
                 credentials: 'include',
             })
             .then(res => res.json())
             .then(user => {
-                console.log("user", user)
+                // console.log("user", user)
                 if (user.message === 'Not Login') {
                     this.setState({ redirectHome: true })
                 }
@@ -177,7 +177,7 @@ export default class User extends Component {
 const styles = {
     spinnerContainer: { display: 'flex', flex: 1, backgroundColor: '#000', opacity: '0.5', position: 'absolute', width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center', zIndex: 10 },
     spinner: { width: '3rem', height: '3rem' },
-    container: { zIndex: 2, position: 'static', width: '80vw', height: '80vh', backgroundColor: '#fff', alignSelf: 'center', borderRadius: 20, display: 'flex', flexDirection: 'column', overflowY: 'scroll', marginLeft: '60px' },
+    container: { zIndex: 2, position: 'static', width: '85vw', height: '85vh', backgroundColor: '#fff', alignSelf: 'center', borderRadius: 20, display: 'flex', flexDirection: 'column', overflowY: 'scroll', marginLeft: '60px' },
     text: { fontFamily: 'DBH', },
     topicTxt: { color: '#ff5f6d', fontFamily: 'DBH', fontSize: '45px' },
     detailTxt: { color: '#222', fontFamily: 'DBH', fontSize: '30px', alignSelf: 'flex-start', marginLeft: 20 },

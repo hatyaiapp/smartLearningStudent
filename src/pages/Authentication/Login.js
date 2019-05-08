@@ -74,10 +74,11 @@ class Login extends Component {
         })
             .then(res => res.json())
             .then(e => {
+                console.log(e)
                 if (e.code === '401') {
                     throw new CodeError(e.message, e.code);
                 }
-                else if (e.uid) {
+                else if (e._id) {
                     this.setState({ isLoading: false }, () => this.setState({ redirect: true }))
                     console.log(e)
                 }
@@ -108,16 +109,16 @@ class Login extends Component {
     }
 
     Login() {
-        console.log("username", this.state.username)
-        console.log("password", this.state.password)
-        console.log("school",this.state.pickedSchool)
+        // console.log("username", this.state.username)
+        // console.log("password", this.state.password)
+        // console.log("school",this.state.pickedSchool)
         this.setState({ isLoading: true }, () => {
             fetch('http://student.questionquick.com/session/',
                 {
                     credentials: 'include',
                     headers: { 'Content-Type': 'application/json' },
                     method: 'POST',
-                    body: JSON.stringify({ 
+                    body: JSON.stringify({
                         'number': this.state.username,
                         'password': this.state.password,
                         'school': this.state.pickedSchool && this.state.pickedSchool.value
@@ -190,6 +191,7 @@ class Login extends Component {
                             <FormGroup style={styles.inputBox}>
                                 <p style={styles.inputLabel} className="label">{word[window.language].studentId}</p>
                                 <Input
+                                    className={'textInput'}
                                     value={this.state.username}
                                     onChange={(e) => this.setState({ username: e.target.value })}
                                     style={styles.input}
@@ -199,6 +201,7 @@ class Login extends Component {
                             <FormGroup style={{ ...styles.inputBox, marginTop: 20 }}>
                                 <p style={styles.inputLabel} className="label">{word[window.language].password}</p>
                                 <Input
+                                    className={'textInput'}
                                     value={this.state.password}
                                     onChange={(e) => this.setState({ password: e.target.value })}
                                     style={styles.input}
@@ -209,14 +212,12 @@ class Login extends Component {
                                 <p style={styles.inputLabel} className="label">{word[window.language].school}</p>
                                 <SelectSearch
                                     options={this.state.school}
-                                    onChange={(e) => this.setState({pickedSchool:e})}
+                                    onChange={(e) => this.setState({ pickedSchool: e })}
                                     value={this.state.pickedSchool && this.state.pickedSchool.value}
                                     mode="input"
                                     name="language"
-                                    placeholder="Choose your language"
+                                    placeholder="Choose your School/University"
                                 />
-
-
                             </FormGroup>
                             <Form style={styles.userTypeContainer}>
                                 {/* <FormGroup onClick={() => this.setState({ type: 'student' })} style={styles.userTypeBox}>
@@ -258,13 +259,13 @@ class Login extends Component {
 }
 
 let styles = {
-    loadingContainer: { display: 'flex', flex: 1, backgroundColor: '#000', opacity: '0.5', position: 'absolute',zIndex:101, width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center' },
+    loadingContainer: { display: 'flex', flex: 1, backgroundColor: '#000', opacity: '0.5', position: 'absolute', zIndex: 101, width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center' },
     loading: { width: '3rem', height: '3rem' },
     loginBox: { width: '85vw', height: '85vh', backgroundColor: '#fff', alignSelf: 'center', borderRadius: 20, display: 'flex', flexDirection: 'column', overflowY: 'scroll' },
     loginContainer: { display: 'flex', flex: 1, flexDirection: 'column', alignItems: 'center' },
     inputBox: { width: '60vw' },
     inputLabel: { textAlign: 'left', marginBottom: -5, fontSize: '30px' },
-    input: { fontFamily: 'DBH', fontWeight: "500", fontSize: '30px' },
+    input: { fontFamily: 'DBH', fontWeight: "500", fontSize: '30px', },
     userTypeContainer: { display: 'flex', flexDirection: 'row', width: '60vw', margin: 'auto' },
     userTypeBox: { width: '12vw', marginLeft: '1vw', marginTop: 10, display: 'flex', flexDirection: 'row' },
     radioBtn: { width: '2vw', height: '2vw', marginTop: '1vw' },
@@ -277,7 +278,8 @@ let styles = {
     errorTxt: { textAlign: 'left', color: 'red', fontFamily: 'DBH', fontSize: '24px' },
     errAlert: { width: '60vw', marginTop: '10px', margin: 'auto' },
     langBox: { color: '#aaa', display: 'flex', flexDirection: 'row', top: 0, right: 0, alignItems: 'center', alignSelf: 'flex-start', position: 'absolute' },
-    langBtn: { fontFamily: 'DBH', fontSize: '30px' }
+    langBtn: { fontFamily: 'DBH', fontSize: '30px' },
+
 }
 
 export default Login;
