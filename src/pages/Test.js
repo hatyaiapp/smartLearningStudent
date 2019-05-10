@@ -74,7 +74,8 @@ var word = {
         article: 'คำถาม',
         onlyPickOne: '* สามารถเลือกคำตอบได้เพียงครั้งเดียวเท่านั้น *',
         notHaveQuestionYet: 'ยังไม่มีคำถามในขณะนี้',
-        changeTabWarning: 'คุณได้ทำการเปลี่ยนไปทำงานในเว็บไซต์ หรือโปรแกรมอื่นๆ'
+        changeTabWarning: 'คุณได้ทำการเปลี่ยนไปทำงานในเว็บไซต์ หรือโปรแกรมอื่นๆ',
+        point: 'คะแนน'
     },
     en: {
         m: 'M.',
@@ -113,7 +114,8 @@ var word = {
         article: 'Article',
         onlyPickOne: '* Can choose the answer only once *',
         notHaveQuestionYet: 'There are no questions at this time.',
-        changeTabWarning: 'You are change to work on the other website or other programs'
+        changeTabWarning: 'You are change to work on the other website or other programs',
+        point: 'point'
     }
 }
 
@@ -202,6 +204,7 @@ class Test extends Component {
             .then(qstn => {
                 if (qstn.message === 'Not Login') {
                     console.log(qstn)
+                    this.setState({redirectHome:true})
                     // fetch('http://student.questionquick.com/session/',
                     //     {
                     //         credentials: 'include',
@@ -469,7 +472,9 @@ class Test extends Component {
                     })
                     .then(res => res.json())
                     .then(exam => {
-                        // console.log('exam data', exam, data, item)
+                        console.log('exam', exam)
+                        console.log('data', data)
+                        console.log('item', item)
                         this.setState({ /*: false,*/ exam, pickedQuiz: item, pickedQuizData: data, fullTimer: data.duration, timer: data.duration * 60, questionType: data.exam.type })
                     })
                     .catch(e => {
@@ -545,8 +550,8 @@ class Test extends Component {
     setMatchAnswer(q, a) {
         let question = this.state.exam[this.state.current]
         if (this.state.answer[this.state.current] && this.state.answer[this.state.current].multiChoice) {
-            let i = this.state.answer[this.state.current].multiChoice.findIndex(c => {return c.cid === q.cid})
-            if(i > -1){
+            let i = this.state.answer[this.state.current].multiChoice.findIndex(c => { return c.cid === q.cid })
+            if (i > -1) {
                 this.state.answer[this.state.current].multiChoice[i] = { cid: q.cid, pid: a.pid }
             }
             else {
@@ -981,7 +986,7 @@ class Test extends Component {
                             //choice
                             <div style={styles.examContainerInner}>
                                 <span style={styles.question}>
-                                    {this.state.exam[this.state.current] && this.state.exam[this.state.current].text}
+                                    {this.state.exam[this.state.current] && this.state.exam[this.state.current].text + ' (' + this.state.exam[this.state.current].point + ' ' + word[window.language].point + ')'}
                                 </span>
                                 <div >
                                     {(this.state.exam[this.state.current] && this.state.exam[this.state.current].media) &&
@@ -1031,7 +1036,7 @@ class Test extends Component {
                             //text
                             <div style={styles.examContainerInner}>
                                 <span style={styles.question}>
-                                    {this.state.exam[this.state.current] && this.state.exam[this.state.current].text}
+                                    {this.state.exam[this.state.current] && this.state.exam[this.state.current].text + ' (' + this.state.exam[this.state.current].point + ' ' + word[window.language].point + ')'}
                                 </span>
                                 {(this.state.exam[this.state.current] && this.state.exam[this.state.current].media) &&
                                     this.getMedia(this.state.exam[this.state.current].media, true)
@@ -1071,7 +1076,7 @@ class Test extends Component {
                             //match and order
                             <div style={styles.examContainerInner}>
                                 <span style={styles.question}>
-                                    {this.state.exam[this.state.current] && this.state.exam[this.state.current].text}
+                                    {this.state.exam[this.state.current] && this.state.exam[this.state.current].text + ' (' + this.state.exam[this.state.current].point + ' ' + word[window.language].point + ')'}
                                 </span>
                                 <div >
                                     {(this.state.exam[this.state.current] && this.state.exam[this.state.current].media) &&
@@ -1164,7 +1169,7 @@ class Test extends Component {
                                     <div>
                                         <div style={styles.cutLine} />
                                         <span style={styles.question}>
-                                            {this.state.exam[this.state.latestVideoIndex] && this.state.exam[this.state.latestVideoIndex].text}
+                                            {this.state.exam[this.state.latestVideoIndex] && this.state.exam[this.state.latestVideoIndex].text + ' (' + this.state.exam[this.state.latestVideoIndex].point + ' ' + word[window.language].point + ')'}
                                         </span>
                                         <div style={styles.answerContainer}>
                                             {this.state.exam[this.state.latestVideoIndex] && this.state.exam[this.state.latestVideoIndex].choices.map((c, index) => {
@@ -1217,7 +1222,7 @@ class Test extends Component {
                             //voting
                             <div style={styles.examContainerInner}>
                                 <span style={styles.question}>
-                                    {this.state.exam[this.state.current] && this.state.exam[this.state.current].text}
+                                    {this.state.exam[this.state.current] && this.state.exam[this.state.current].text + ' (' + this.state.exam[this.state.current].point + ' ' + word[window.language].point + ')'}
                                 </span>
                                 <div >
                                     {(this.state.exam[this.state.current] && this.state.exam[this.state.current].media) &&
@@ -1270,7 +1275,7 @@ class Test extends Component {
                             //answer template
                             <div style={styles.examContainerInner}>
                                 <span style={styles.question}>
-                                    {this.state.exam[this.state.current] && this.state.exam[this.state.current].text}
+                                    {this.state.exam[this.state.current] && this.state.exam[this.state.current].text + ' (' + this.state.exam[this.state.current].point + ' ' + word[window.language].point + ')'}
                                 </span>
                                 <div >
                                     {(this.state.exam[this.state.current] && this.state.exam[this.state.current].media) &&

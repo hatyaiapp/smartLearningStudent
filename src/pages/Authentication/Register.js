@@ -16,12 +16,30 @@ class CodeError extends Error {
 }
 
 let room = [
-    { value: '1_1', name: '1/1' },
-    { value: '1_2', name: '1/2' },
-    { value: '1_3', name: '1/3' },
-    { value: '1_4', name: '1/4' },
-    { value: '1_5', name: '1/5' },
-    { value: '1_6', name: '1/6' }
+    { value: '1', name: '1' },
+    { value: '2', name: '2' },
+    { value: '3', name: '3' },
+    { value: '4', name: '4' },
+    { value: '5', name: '5' },
+    { value: '6', name: '6' },
+    { value: '7', name: '7' },
+    { value: '8', name: '8' },
+    { value: '9', name: '9' },
+    { value: '10', name: '10' },
+    { value: '11', name: '11' },
+    { value: '12', name: '12' },
+    { value: '13', name: '13' },
+    { value: '14', name: '14' },
+    { value: '15', name: '15' }
+]
+
+let grade = [
+    { value: '1', name: '1' },
+    { value: '2', name: '2' },
+    { value: '3', name: '3' },
+    { value: '4', name: '4' },
+    { value: '5', name: '5' },
+    { value: '6', name: '6' }
 ]
 
 let word = {
@@ -43,6 +61,7 @@ let word = {
         activatedComplete: 'ลงทะเบียนสำเร็จ',
         ok: 'ตกลง',
         school: 'สถานศึกษา',
+        grade: 'ระบบชั้น',
         room: 'ห้องเรียน',
         err_accountNotActivated: 'ยังไม่ได้ยืนยันการสมัครสมาชิกผ่านอีเมล',
         err_duplicateEmail: 'อีเมลนี้ถูกใช้งานแล้ว',
@@ -68,6 +87,7 @@ let word = {
         activatedComplete: 'Activated account complate',
         ok: 'OK',
         school: 'School/University',
+        grade: 'Grade',
         room: 'Room',
         err_accountNotActivated: 'Account not activated',
         err_duplicateEmail: 'Duplicate email',
@@ -82,7 +102,7 @@ export default class Login extends Component {
         super();
         this.state = {
             type: 'student',
-            username: 'natruja@jkt.com',
+            username: '',
             password: '',
             isLoading: false,
             backToLogin: false,
@@ -91,7 +111,6 @@ export default class Login extends Component {
             activatecode: '',
             inviteCode: '',
             name: '',
-            password: '',
             registerComplete: false,
             school: []
         }
@@ -119,16 +138,19 @@ export default class Login extends Component {
 
     SendEmail() {
         //"6XXACBQ4MB"
-        console.log(this.state.email)
+        console.log(this.state.email, this.state.password, this.state.name, this.state.pickedSchool.value, this.state.pickedGrade.value, this.state.pickedRoom.value)
+
         fetch('http://student.questionquick.com/user/signup/', {
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
             method: 'POST',
             body: JSON.stringify({
                 'number': this.state.email,
-                'inviteCode': this.state.inviteCode,
-                'name': this.state.name,
                 'password': this.state.password,
+                'name': this.state.name,
+                'school': this.state.pickedSchool.value,
+                'grade': this.state.pickedGrade.value,
+                'room': this.state.pickedRoom.value
             })
         })
             .then(res => Promise.all([res, res.json()]))
@@ -232,7 +254,7 @@ export default class Login extends Component {
                                     <p style={styles.inputLabel} className="label">{word[window.language].studentId}</p>
                                     <Input
                                         className="textInput"
-                                        value={this.state.studentId}
+                                        value={this.state.email}
                                         onChange={(e) => this.setState({ email: e.target.value })}
                                         style={styles.input}
                                         type="text" name="number" id="number" placeholder="Student ID"
@@ -274,17 +296,30 @@ export default class Login extends Component {
                                         placeholder="Choose your School/University"
                                     />
                                 </FormGroup>
-                                <FormGroup style={{ ...styles.inputBox, marginTop: -15 }}>
-                                    <p style={styles.inputLabel} className="label">{word[window.language].room}</p>
-                                    <SelectSearch
-                                        options={room}
-                                        onChange={(e) => this.setState({ pickedRoom: e })}
-                                        value={this.state.pickedRoom && this.state.pickedRoom.value}
-                                        mode="input"
-                                        name="language"
-                                        placeholder="Choose your Room"
-                                    />
-                                </FormGroup>
+                                <div style={styles.roomGroup}>
+                                    <FormGroup style={{ ...styles.inputBox, marginTop: -15, width: '28vw', marginRight: '2vw' }}>
+                                        <p style={styles.inputLabel} className="label">{word[window.language].grade}</p>
+                                        <SelectSearch
+                                            options={grade}
+                                            onChange={(e) => this.setState({ pickedGrade: e })}
+                                            value={this.state.pickedGrade && this.state.pickedGrade.value}
+                                            mode="input"
+                                            name="language"
+                                            placeholder="Choose your Grade"
+                                        />
+                                    </FormGroup>
+                                    <FormGroup style={{ ...styles.inputBox, marginTop: -15, width: '29vw' }}>
+                                        <p style={styles.inputLabel} className="label">{word[window.language].room}</p>
+                                        <SelectSearch
+                                            options={room}
+                                            onChange={(e) => this.setState({ pickedRoom: e })}
+                                            value={this.state.pickedRoom && this.state.pickedRoom.value}
+                                            mode="input"
+                                            name="language"
+                                            placeholder="Choose your Room"
+                                        />
+                                    </FormGroup>
+                                </div>
                                 {/* <FormGroup style={styles.inputBox}>
                                     <p style={styles.inputLabel} className="label">{word[window.language].inviteCode}</p>
                                     <Input
@@ -399,6 +434,7 @@ let styles = {
     inputBox: { width: '60vw' },
     inputLabel: { textAlign: 'left', marginBottom: -5, fontSize: '30px' },
     input: { fontFamily: 'DBH', fontWeight: "500", fontSize: '30px' },
+    roomGroup: { display: 'flex', flexDirection: 'row' },
     dropdownInput: { width: '100%', },
     finishBtn: { width: '60vw', margin: 'auto', fontFamily: 'DBH', fontSize: '30px', backgroundColor: '#f0592b', borderWidth: 0 },
     finishBtnIco: { width: '1.75vw', fontSize: '24px', color: '#fff' },
