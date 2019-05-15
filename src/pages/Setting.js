@@ -14,10 +14,14 @@ class CodeError extends Error {
 
 let word = {
     th: {
-        setting: 'ตั้งค่า'
+        setting: 'ตั้งค่า',
+        logout: 'ออกจากระบบ',
+        cancel: 'ยกเลิก',
     },
     en: {
-        setting: 'Setting'
+        setting: 'Setting',
+        logout: 'Log out',
+        cancel: 'Cancel',
     }
 }
 
@@ -27,7 +31,7 @@ export default class Setting extends Component {
         this.state = {
             goUserPage: false,
             goTestPage: false,
-            redirectHome:false,
+            redirectHome: false,
         }
     }
 
@@ -44,11 +48,37 @@ export default class Setting extends Component {
             })
     }
 
+
+    logout() {
+        fetch('http://student.questionquick.com/session/',
+            {
+                credentials: 'include',
+                // headers: { 'Content-Type': 'application/json' },
+                method: 'DELETE',
+            })
+            .then(res => res.json())
+            .then(e => {
+                if (e.code === '401') {
+                    throw new CodeError(e.message, e.code);
+                }
+                else {
+                    this.setState({ isLoading: false }, () => this.setState({ redirectHome: true }))
+                    console.log(e)
+                }
+
+            })
+            .catch(err => {
+                this.setState({ isLoading: false }, () => this.setState({ redirectHome: true }))
+                console.log('error', err)
+            })
+    }
+
+
     render() {
         if (this.state.redirectHome) {
             return <Redirect push to="/" />;
         }
-        
+
         return (
             <div className="login loginContainer">
                 <SideNav page={'setting'} />
@@ -87,10 +117,24 @@ export default class Setting extends Component {
                                 </Button>
                             </div>
                         </div>
+                        <Button color={'danger'} style={styles.logoutBtn} onClick={() => this.setState({ confirmLogout: true })}>
+                            {word[window.language].logout}
+                        </Button>
                     </div>
                     <img src={require('../image/decorate02.png')} style={styles.decotateLeft} alt={'decorate02'} />
                     <img src={require('../image/decorate01.png')} style={styles.decotateRight} alt={'decorate01'} />
                 </div>
+
+                <Modal isOpen={this.state.confirmLogout} toggle={() => this.setState({ confirmLogout: false })}>
+                    <ModalHeader toggle={() => this.setState({ confirmLogout: false })}>
+                        <span style={styles.logoutHeader}>{word[window.language].logout}</span>
+                    </ModalHeader>
+                    <ModalFooter>
+                        <Button color="danger" onClick={() => this.setState({ confirmLogout: false }, () => this.logout())}>{word[window.language].logout}</Button>
+                        {' '}
+                        <Button color="secondary" onClick={() => this.setState({ confirmLogout: false })}>{word[window.language].cancel}</Button>
+                    </ModalFooter>
+                </Modal>
             </div>
         );
     }
@@ -99,12 +143,14 @@ export default class Setting extends Component {
 const styles = {
     loadingContainer: { display: 'flex', flex: 1, backgroundColor: '#000', opacity: '0.5', position: 'absolute', width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center' },
     loading: { width: '3rem', height: '3rem' },
-    container: { zIndex: 2, width: '85vw', height: '85vh', backgroundColor: '#fff', alignSelf: 'center', borderRadius: 20, display: 'flex', flexDirection: 'column', overflowY: 'scroll', marginLeft: '60px' },
+    container: { zIndex: 2, width: '85vw', height: '85vh', backgroundColor: '#fff', alignSelf: 'center', borderRadius: 20, overflow: 'hidden', display: 'flex', flexDirection: 'column', marginLeft: '60px' },
     topic: { color: '#ff5f6d', fontFamily: 'DBH', fontSize: '45px' },
     decotateLeft: { bottom: 0, left: 0, position: 'absolute', width: '25vw', marginLeft: '60px' },
     decotateRight: { bottom: 0, right: 0, position: 'absolute', width: '25vw' },
-    box: { display: 'flex', flexDirection: 'row', justifyContent: 'space-between', marginLeft: 10, marginRight: 10, alignItems: 'center' },
+    box: { display: 'flex', overflowY: 'scroll', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginLeft: 10, marginRight: 10, alignItems: 'center' },
     settingTopic: { fontFamily: 'DBH', fontSize: '34px' },
+    logoutBtn: { marginTop: 'auto', fontFamily: 'DBH', fontSize: '20px' },
+    logoutHeader: { color: '#222', fontFamily: 'DBH', fontSize: '2vw', alignSelf: 'flex-start' },
     languageBox: {},
     languageBtn: { marginLeft: 10, fontFamily: 'DBH', fontSize: '30px' }
 }

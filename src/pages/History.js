@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import '../App.css';
 import { Button, Modal, ModalHeader, ModalBody, ModalFooter, UncontrolledCollapse, Spinner, CustomInput, Collapse, Toast, ToastHeader, ToastBody, Input, Dropdown, DropdownToggle, DropdownMenu, DropdownItem, Progress, Alert } from 'reactstrap';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faUser, faClock, faFileAlt, faCalendarAlt, faCaretRight, faCaretLeft, faExclamationCircle, faInfoCircle, faEye, faEyeSlash, faArrowAltCircleRight, faTimes, faArrowsAltH, faChevronCircleLeft, faStarHalfAlt } from "@fortawesome/free-solid-svg-icons";
+import { faUser, faClock, faFileAlt, faCalendarAlt, faCaretRight, faCaretLeft, faInfoCircle, faArrowsAltH, faChevronCircleLeft, faStarHalfAlt, faCheckCircle, faTimesCircle } from "@fortawesome/free-solid-svg-icons";
 import '@trendmicro/react-sidenav/dist/react-sidenav.css';
 import SideNav from '../_component/sideNav'
 import { Player } from 'video-react';
@@ -276,14 +276,14 @@ export default class Setting extends Component {
 
     getMedia(media, isQuestion) {
         if (media.type === 'image') {
-            let imageBox = { marginBottom: isQuestion ? 20 : 10, marginTop: isQuestion ? 0 : 10 }
+            let imageBox = { marginBottom: isQuestion ? 20 : 10, marginTop: isQuestion ? 0 : 10, marginLeft: 'auto', marginRight: 'auto' }
             let imageStyle = { height: isQuestion ? '30vh' : 'auto', width: isQuestion ? 'auto' : '18vw', borderRadius: 7 }
             return <div style={imageBox}>
                 <img src={'http://student.questionquick.com' + media.path} alt={''} style={imageStyle} />
             </div>
         }
         else if (media.type === 'video') {
-            let videoBox = { width: isQuestion ? '100%' : '17vw', height: isQuestion ? '45vh' : 'auto', marginBottom: isQuestion ? 20 : 10, margin: 'auto', marginTop: isQuestion ? 0 : 10, borderRadius: 7 }
+            let videoBox = { width: isQuestion ? '100%' : '17vw', height: isQuestion ? '45vh' : 'auto', marginBottom: isQuestion ? 20 : 10, margin: 'auto', marginTop: isQuestion ? 0 : 10, marginLeft: 'auto', marginRight: 'auto', borderRadius: 7 }
             // let videoStyle = { width: isQuestion ? '40.8vw' : '17vw', }
             return <div style={videoBox}>
                 <Player
@@ -298,7 +298,7 @@ export default class Setting extends Component {
             </div>
         }
         else if (media.type === 'audio') {
-            let audioBox = { width: isQuestion ? '30vw' : '18vw', marginBottom: isQuestion ? 20 : 0, margin: 'auto', marginTop: isQuestion ? 0 : 10 }
+            let audioBox = { width: isQuestion ? '30vw' : '18vw', marginBottom: isQuestion ? 20 : 0, margin: 'auto', marginTop: isQuestion ? 0 : 10, marginLeft: 'auto', marginRight: 'auto' }
             let audioStyle = { width: '100%' }
             return <div style={audioBox}>
                 <ReactAudioPlayer
@@ -343,6 +343,24 @@ export default class Setting extends Component {
         else {
             return <span style={{ color: '#ffeeae' }}> ({word[window.language].uncheck})</span>
         }
+    }
+
+    isAllMatch(ans) {
+        for (let i in ans.pair) {
+            if (ans.pair[i].correct !== ans.answer.multiChoice.find(c => { return c.pid === ans.pair[i].pid }).cid) {
+                return false
+            }
+        }
+        return true
+    }
+
+    isAllCheck(){
+        for(let i in this.state.pickedHistory.questions){
+            if(!this.state.pickedHistory.questions[i].answer || !this.state.pickedHistory.questions[i].answer.result){
+                return true
+            }
+        }
+        return false
     }
     ///GETTER///
 
@@ -411,7 +429,7 @@ export default class Setting extends Component {
                     </div>
                     <div style={styles.quizBox1_1DetailBox}>
                         <FontAwesomeIcon icon={faStarHalfAlt} style={styles.quizBox1_1DetailIco} />
-                        <span style={styles.quizBox1_1DetailTxt}>: {this.state.pickedHistory && this.state.pickedHistory.totalPoint} {word[window.language].point}</span>
+                        <span style={styles.quizBox1_1DetailTxt}>: {this.state.pickedHistory && this.state.pickedHistory.totalPoint}{this.isAllCheck() && '+'} {word[window.language].point}</span>
                     </div>
                 </div>
             </div>
@@ -540,14 +558,18 @@ export default class Setting extends Component {
                         let cid = c.cid
                         // let data = this.state.pickedHistory.answers.find(a => { return a.qid == id })
                         let data = this.state.pickedHistory.questions[this.getPickIndex()].answer
-                        let btnStyle = { width: '97%', padding: 0, borderRadius: 30, marginTop: 10, cursor: 'default', backgroundColor: '#fff', border: '2px solid #2abaf0' }
+                        let btnStyle = { width: '97%', padding: 0, borderRadius: 30, marginTop: 10, cursor: 'default', backgroundColor: '#fff', border: '2px solid #2abaf0', marginLeft: 'auto', marginRight: 'auto' }
+
+                        let btnType = 'normal'
                         if (data && cid === data.cid && correctChoice.findIndex(ca => ca.cid === data.cid) < 0) {
                             btnStyle.backgroundColor = '#ff6e69'
                             btnStyle.border = '2px solid #ff6e69'
+                            btnType = 'wrong'
                         }
                         else if (correctChoice && correctChoice.findIndex(ca => ca.cid === cid) > -1) {
                             btnStyle.backgroundColor = '#96ceb4'
                             btnStyle.border = '2px solid #96ceb4'
+                            btnType = 'correct'
                         }
 
                         return (
@@ -559,6 +581,14 @@ export default class Setting extends Component {
                                         <span style={styles.answerTxt}>{c.text}</span>
                                     </Button>
                                     {c.media && this.getMedia(c.media, false)}
+                                    {btnType === 'correct' ?
+                                        <FontAwesomeIcon icon={faCheckCircle} style={{ ...styles.answerIco, color: '#28a746' }} />
+                                        :
+                                        btnType === 'wrong' ?
+                                            <FontAwesomeIcon icon={faTimesCircle} style={{ ...styles.answerIco, color: '#dc3446' }} />
+                                            :
+                                            null
+                                    }
                                 </div>
                                 <div style={styles.answerContainerFullfill} />
                             </div>
@@ -621,10 +651,10 @@ export default class Setting extends Component {
                 <div style={{ ...styles.answerContainer }}>
                     <div style={styles.answerMatchContainer}>
                         <div style={styles.matchBtn}>
-                            <p style={styles.text} color={'danger'}>{word[window.language].article}</p>
+                            <p style={{ ...styles.text, marginLeft: 'auto', marginRight: 'auto' }} color={'danger'}>{word[window.language].article}</p>
                         </div>
                         <div style={styles.matchBtn}>
-                            <p style={styles.text} color={'success'}>{word[window.language].answer}</p>
+                            <p style={{ ...styles.text, marginLeft: 'auto', marginRight: 'auto' }} color={'success'}>{word[window.language].answer}</p>
                         </div>
                     </div>
                     {this.state.exam[this.state.current].choices.map((item, index) => {
@@ -638,45 +668,54 @@ export default class Setting extends Component {
                         return (
                             <div key={index} style={styles.answerMatchContainer}>
                                 <div style={styles.matchBtn}>
-                                    <Button style={styles.matchingBtn} /*outline*/ color="primary" disabled>{item.text}</Button>
+                                    <Button style={styles.matchingBtn} color="primary" disabled>{item.text}</Button>
                                 </div>
                                 <FontAwesomeIcon icon={faArrowsAltH} style={{ ...styles.startMainQuizBtnIco, color: '#aaa' }} />
                                 <div style={styles.matchBtn}>
-                                    <Button style={styles.matchingBtn} /*outline*/ color={BtnClr} disabled>{answerData ? answerData.text : '-'}</Button>
+                                    <Button style={styles.matchingBtn} color={BtnClr} disabled>{answerData ? answerData.text : '-'}</Button>
+                                    {BtnClr === 'success' ?
+                                        <FontAwesomeIcon icon={faCheckCircle} style={{ ...styles.answerIco, color: '#28a746' }} />
+                                        :
+                                        BtnClr === 'danger' ?
+                                            <FontAwesomeIcon icon={faTimesCircle} style={{ ...styles.answerIco, color: '#dc3446' }} />
+                                            :
+                                            null
+                                    }
                                 </div>
                             </div>
                         )
                     })}
                 </div>
 
-                <div style={{ ...styles.answerContainer }}>
-                    <div style={{ ...styles.cutLine, marginTop: 30 }} />
-                    <span style={styles.answerTopicTxt}>{word[window.language].answer}</span>
-                    <div style={styles.answerMatchContainer}>
-                        <div style={styles.matchBtn}>
-                            <p style={styles.text} color={'danger'}>{word[window.language].article}</p>
-                        </div>
-                        <div style={styles.matchBtn}>
-                            <p style={styles.text} color={'success'}>{word[window.language].answer}</p>
-                        </div>
-                    </div>
-                    {this.state.exam[this.state.current].choices.map((item, index) => {
-                        console.log(item, correctAns)
-                        let ans = correctAns.pair.find(p => { return p.correct === item.cid })
-                        console.log(ans)
-                        return (
-                            <div key={index} style={styles.answerMatchContainer}>
-                                <div style={styles.matchBtn}>
-                                    <Button style={styles.matchingBtn} /*outline*/ color="info" disabled>{item.text}</Button>
-                                </div>
-                                <FontAwesomeIcon icon={faArrowsAltH} style={{ ...styles.startMainQuizBtnIco, color: '#aaa' }} />
-                                <div style={styles.matchBtn}>
-                                    <Button style={styles.matchingBtn} /*outline*/ color={'info'} disabled>{ans && ans.text}</Button>
-                                </div>
+                {!this.isAllMatch(correctAns) &&
+                    <div style={{ ...styles.answerContainer }}>
+                        <div style={{ ...styles.cutLine, marginTop: 30 }} />
+                        <span style={{ ...styles.answerTopicTxt, textDecorationLine: 'underline' }}>{word[window.language].answer}</span>
+                        <div style={styles.answerMatchContainer}>
+                            <div style={styles.matchBtn}>
+                                <p style={{ ...styles.text, marginLeft: 'auto', marginRight: 'auto' }} color={'danger'}>{word[window.language].article}</p>
                             </div>
-                        )
-                    })}
-                </div>
+                            <div style={styles.matchBtn}>
+                                <p style={{ ...styles.text, marginLeft: 'auto', marginRight: 'auto' }} color={'success'}>{word[window.language].answer}</p>
+                            </div>
+                        </div>
+                        {this.state.exam[this.state.current].choices.map((item, index) => {
+                            let ans = correctAns.pair.find(p => { return p.correct === item.cid })
+                            return (
+                                <div key={index} style={styles.answerMatchContainer}>
+                                    <div style={styles.matchBtn}>
+                                        <Button style={styles.matchingBtn} /*outline*/ color="info" disabled>{item.text}</Button>
+                                    </div>
+                                    <FontAwesomeIcon icon={faArrowsAltH} style={{ ...styles.startMainQuizBtnIco, color: '#aaa' }} />
+                                    <div style={styles.matchBtn}>
+                                        <Button style={styles.matchingBtn} /*outline*/ color={'info'} disabled>{ans && ans.text}</Button>
+                                    </div>
+                                </div>
+                            )
+                        })}
+                    </div>
+                }
+
                 {correctAns.solution &&
                     <div style={styles.solutionBox}>
                         <h4 style={styles.solutionTopic}>{word[window.language].solutionTopic}</h4>
@@ -717,16 +756,19 @@ export default class Setting extends Component {
                                 let cid = c.cid
                                 // let data = this.state.pickedHistory.answers.find(a => { return a.qid == id })
                                 let data = this.state.pickedHistory.questions[this.getPickIndex()].answer
-                                let btnStyle = { width: '97%', padding: 0, borderRadius: 30, marginTop: 10, cursor: 'default', backgroundColor: '#fff', border: '2px solid #2abaf0' }
+                                let btnStyle = { width: '97%', padding: 0, borderRadius: 30, marginTop: 10, cursor: 'default', backgroundColor: '#fff', border: '2px solid #2abaf0', marginLeft: 'auto', marginRight: 'auto' }
+                                let btnType;
                                 if (data && cid === data.cid && correctChoice.findIndex(ca => ca.cid === data.cid) < 0) {
                                     btnStyle.backgroundColor = '#ff6e69'
                                     btnStyle.border = '2px solid #ff6e69'
+                                    btnType = 'wrong'
                                 }
                                 else if (correctChoice && correctChoice.findIndex(ca => ca.cid === cid) > -1) {
                                     btnStyle.backgroundColor = '#96ceb4'
                                     btnStyle.border = '2px solid #96ceb4'
+                                    btnType = 'correct'
                                 }
-                                
+
                                 return (
                                     <div key={index} style={styles.answerBtnContainer}>
                                         <div style={styles.answerContainerInner}>
@@ -734,6 +776,14 @@ export default class Setting extends Component {
                                                 <span style={styles.answerTxt}>{c.text}</span>
                                             </Button>
                                             {c.media && this.getMedia(c.media, false)}
+                                            {btnType === 'correct' ?
+                                                <FontAwesomeIcon icon={faCheckCircle} style={{ ...styles.answerIco, color: '#28a746' }} />
+                                                :
+                                                btnType === 'wrong' ?
+                                                    <FontAwesomeIcon icon={faTimesCircle} style={{ ...styles.answerIco, color: '#dc3446' }} />
+                                                    :
+                                                    null
+                                            }
                                         </div>
                                         <div style={styles.answerContainerFullfill} />
                                     </div>
@@ -899,8 +949,8 @@ const styles = {
     routerBtnDisable: { width: '150px', background: '#aaa', marginTop: 2, marginLeft: 2, borderWidth: 0, padding: 0, borderRadius: 30, margin: 10, alignSelf: "center" },
     routerBtnIco: { width: '1.75vw', fontSize: '24px' },
     routerBtnTxt: { fontFamily: 'DBH', fontWeight: 500, color: '#fff', fontSize: '30px' },
-    examContainer: { display: 'flex', flex: 1, flexDirection: 'column', backgroundColor: '#fff', margin: 10, marginTop: 0, border: '2px solid #ff5f6d', borderRadius: 10, overflow: 'hidden' },
-    examContainerInner: { overflowY: 'scroll', display: 'flex', flex: 1, paddingLeft: '10px', width: '100%', flexDirection: 'column', marginTop: '5px' },
+    examContainer: {/* display: 'flex',*/ flex: 1, height: '100%', position: 'relative', flexDirection: 'column', backgroundColor: '#fff', margin: 10, marginTop: 0, border: '2px solid #ff5f6d', borderRadius: 10, overflow: 'hidden' },
+    examContainerInner: { overflowY: 'scroll', /*display: 'flex', flex: 1,*/height: '100%', paddingLeft: '10px', width: '100%', flexDirection: 'column', marginTop: '5px' },
     videoExamPlayerContainer: { width: '100%', height: '45vh', marginBottom: 10, marginLeft: 'auto', marginRight: 'auto', marginTop: 5 },
     question: { fontFamily: 'DBH', fontSize: '30px', fontWeight: 500, textAlign: 'left', marginLeft: 10, marginBottom: 10, display: 'flex', color: '#1c5379' },
     answerContainer: { display: 'flex', /*flex: 1,*/ flexWrap: 'wrap', flexDirection: 'row' },
@@ -908,11 +958,11 @@ const styles = {
     answerTextInputBox: { marginLeft: '15px', marginRight: '5px', height: '200px', width: '100%', border: '1px solid #aaa', borderRadius: '5px', padding: 5, marginTop: '10px', marginBottom: '10px', },
     answerTextInput: { textAlign: 'left', height: '100%' },
     answerBtnContainer: { width: '45%', marginBottom: 20, marginLeft: '2.5%', },
-    answerContainerInner: { backgroundColor: '#eee', borderRadius: 30, paddingBottom: 10 },
+    answerContainerInner: { backgroundColor: '#eee', position: 'relative', borderRadius: 30, paddingBottom: 10, display: 'flex', flexDirection: 'column', alignItems: 'flex-end' },
     answerTxt: { fontFamily: 'DBH', fontWeight: 500, color: '#1c5379', fontSize: '30px' },
     answerContainerFullfill: { display: 'flex', flex: 1 },
-    matchBtn: { width: '100%', justifyContent: 'center' },
-    matchingBtn: { fontFamily: 'DBH', fontSize: '25px', width: '75%', marginBottom: '10px', marginTop: '10px', height: '50px', borderRadius: '25px' },
+    matchBtn: { width: '45%', position: 'relative', justifyContent: 'flex-end', display: 'flex', marginLeft: 'auto', marginRight: 'auto' },
+    matchingBtn: { fontFamily: 'DBH', fontSize: '25px', width: '100%', marginBottom: '10px', marginTop: '10px', height: '50px', borderRadius: '25px', marginLeft: 'auto', marginRight: 'auto' },
     dropdownMenu: { width: '98%', marginBottom: '10px', marginRight: '2%' },
     votingContainer: { display: 'flex', flexDirection: 'row', alignItems: 'center', marginBottom: '5px' },
     votingBtn: { width: '200px', marginRight: '5px', height: '50px' },
@@ -927,5 +977,6 @@ const styles = {
 
     solutionBox: { width: '90%', border: '2px solid #239822', borderRadius: 20, margin: 'auto', paddingLeft: 10, paddingRight: 10, paddingTop: 5 },
     solutionTopic: { color: '#49c348', textAlign: 'left', fontFamily: 'DBH', fontWeight: 'bold', fontSize: 30, textDecorationLine: 'underline' },
-    solutionTxt: { textAlign: 'left', fontFamily: 'DBH', fontWeight: 500, fontSize: 25, marginLeft: 10 }
+    solutionTxt: { textAlign: 'left', fontFamily: 'DBH', fontWeight: 500, fontSize: 25, marginLeft: 10 },
+    answerIco: { fontSize: '30px', position: 'absolute', backgroundColor: '#fff', borderRadius: 30, padding: 2, display: 'flex' }
 }

@@ -51,30 +51,6 @@ export default class Setting extends Component {
         }
     }
 
-    logout() {
-        fetch('http://student.questionquick.com/session/',
-            {
-                credentials: 'include',
-                // headers: { 'Content-Type': 'application/json' },
-                method: 'DELETE',
-            })
-            .then(res => res.json())
-            .then(e => {
-                if (e.code === '401') {
-                    throw new CodeError(e.message, e.code);
-                }
-                else {
-                    this.setState({ isLoading: false }, () => this.setState({ redirectHome: true }))
-                    console.log(e)
-                }
-
-            })
-            .catch(err => {
-                this.setState({ isLoading: false }, () => this.setState({ redirectHome: true }))
-                console.log('error', err)
-            })
-    }
-
     navigate(act, warning) {
         if (warning && act !== 'goTestPage') {
             this.setState({ quizModal: true, navAct: act })
@@ -189,12 +165,12 @@ export default class Setting extends Component {
                                 {word[window.language].setting}
                             </NavText>
                         </NavItem>
-                        <div style={{ display: 'flex', flex: 1 }} />
+                        {/* <div style={{ display: 'flex', flex: 1 }} />
                         {window.sideNav &&
                             <Button color="link" style={{ color: '#fff' }} onClick={() => this.setState({ confirmLogout: true })}>
                                 {word[window.language].logout}
                             </Button>
-                        }
+                        } */}
                     </SideNav.Nav>
                 </SideNav>
 

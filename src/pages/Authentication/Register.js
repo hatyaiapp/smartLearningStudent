@@ -61,7 +61,7 @@ let word = {
         activatedComplete: 'ลงทะเบียนสำเร็จ',
         ok: 'ตกลง',
         school: 'สถานศึกษา',
-        grade: 'ระบบชั้น',
+        grade: 'ระดับชั้น',
         room: 'ห้องเรียน',
         err_accountNotActivated: 'ยังไม่ได้ยืนยันการสมัครสมาชิกผ่านอีเมล',
         err_duplicateEmail: 'อีเมลนี้ถูกใช้งานแล้ว',
