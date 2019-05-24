@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import '../App.css';
 import { Button, Modal, ModalHeader, ModalBody, ModalFooter, UncontrolledCollapse, Spinner, CustomInput, Collapse, Toast, ToastHeader, ToastBody, Input, Dropdown, DropdownToggle, DropdownMenu, DropdownItem, Progress, Alert } from 'reactstrap';
-import { faUser, faClock, faFileAlt, faCalendarAlt, faCaretRight, faCaretLeft, faExclamationCircle, faInfoCircle, faEye, faEyeSlash, faArrowAltCircleRight, faTimes, faArrowsAltH } from "@fortawesome/free-solid-svg-icons";
+import { faUser, faClock, faFileAlt, faCalendarAlt, faCaretRight, faCaretLeft, faExclamationCircle, faInfoCircle, faEye, faEyeSlash, faArrowAltCircleRight, faTimes, faArrowsAltH, faRedoAlt } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Player } from 'video-react';
 import ReactAudioPlayer from 'react-audio-player';
@@ -75,7 +75,8 @@ var word = {
         onlyPickOne: '* สามารถเลือกคำตอบได้เพียงครั้งเดียวเท่านั้น *',
         notHaveQuestionYet: 'ยังไม่มีคำถามในขณะนี้',
         changeTabWarning: 'คุณได้ทำการเปลี่ยนไปทำงานในเว็บไซต์ หรือโปรแกรมอื่นๆ',
-        point: 'คะแนน'
+        point: 'คะแนน',
+        sendAnswer: 'ส่งคำตอบ',
     },
     en: {
         m: 'M.',
@@ -115,7 +116,8 @@ var word = {
         onlyPickOne: '* Can choose the answer only once *',
         notHaveQuestionYet: 'There are no questions at this time.',
         changeTabWarning: 'You are change to work on the other website or other programs',
-        point: 'point'
+        point: 'point',
+        sendAnswer: 'SEND',
     }
 }
 
@@ -171,8 +173,11 @@ class Test extends Component {
             latestVideoIndex: -1,
             matchingDropdownOpenIndex: -1,
             votedId: null,
+            votedResult: {},
             questionType: 'normal',
-            isVoteSubmited: false
+            isVoteSubmited: false,
+            isLoadingVote: false,
+            isSendingVote: false
         }
     }
 
@@ -184,8 +189,13 @@ class Test extends Component {
         window.history.pushState(null, null, window.location.href);
         window.onpopstate = function (e) {
             if (_this.state.isStart) {
-                _this.setState({ quizModal: true, quitConfirmed: true })
-                window.history.go(1)
+                if (_this.state.questionType === 'vote' && _this.isFinish()) {
+                    window.history.go(0)
+                }
+                else {
+                    _this.setState({ quizModal: true, quitConfirmed: true })
+                    window.history.go(1)
+                }
             }
             else if (_this.state.pickedQuiz && !_this.state.start) {
                 window.sideNav = false
@@ -204,7 +214,7 @@ class Test extends Component {
             .then(qstn => {
                 if (qstn.message === 'Not Login') {
                     console.log(qstn)
-                    this.setState({redirectHome:true})
+                    this.setState({ redirectHome: true })
                     // fetch('http://student.questionquick.com/session/',
                     //     {
                     //         credentials: 'include',
@@ -283,7 +293,10 @@ class Test extends Component {
     }
 
     onUnload(event, _this) {
-        if (_this.state.isStart && !_this.state.quitConfirmed) {
+        if(_this.state.questionType === 'vote' && !_this.state.isFinish()){
+
+        }
+        else if (_this.state.isStart && !_this.state.quitConfirmed) {
             event.preventDefault();
             event.returnValue = '';
         }
@@ -377,16 +390,6 @@ class Test extends Component {
 
     ////ACTIVE////
     start() {
-        // console.log(this.state.pickedQuiz, this.state.pickedQuizData)
-
-        // //for test only
-        // this.setState({ isStart: true, isLoading: false, startExamModal: false, /*answersheet: e*/ }, () => {
-        //     this.clockCall = setInterval(() => {
-        //         this.decrementClock();
-        //     }, 1000);
-        // })
-        // //for test only
-
         this.setState({ isLoading: true }, () => {
             fetch('http://student.questionquick.com/quiz/',
                 {
@@ -562,16 +565,81 @@ class Test extends Component {
             this.state.answer[this.state.current] = { qid: question.qid, multiChoice: [{ cid: q.cid, pid: a.pid }] }
         }
     }
+
+    sendVote() {
+        console.log(this.state.currentVote)
+        this.setState({ isSendingVote: true }, () => {
+            fetch('http://student.questionquick.com/quiz/vote/' + this.state.answersheet._id, {
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                method: 'PUT',
+                body: JSON.stringify(this.state.currentVote)
+            })
+                .then(res => res.json())
+                .then(json => {
+                    if (json.qid) {
+                        this.state.votedResult[json.qid] = json
+                        this.setState({ isSendingVote: false })
+                    }
+                })
+                .catch(err => {
+                    alert(err.message)
+                    console.log("err", err)
+                })
+        })
+    }
+
+    fetchVoteData(question) {
+        if (this.state.votedResult[question.qid] && !this.state.isLoadingVote) {
+            this.setState({ isLoadingVote: true }, () => {
+                fetch('http://student.questionquick.com/quiz/vote/' + this.state.answersheet._id + '/' + question.qid, {
+                    credentials: 'include',
+                })
+                    .then(res => res.json())
+                    .then(json => {
+                        this.state.votedResult[json.qid].votes = json.votes
+                        let _this = this
+                        setTimeout(() => {
+                            _this.setState({ isLoadingVote: false })
+                        }, 2000);
+
+                    })
+                    .catch(err => {
+                        alert(err.message)
+                        this.setState({ isLoadingVote: false })
+                        // this.setState({ quizModal: false, isSendingAnswer: false })
+                        console.log("err", err)
+                    })
+            })
+        }
+        else {
+            console.log("can't")
+        }
+    }
     ////ACTIVE////
 
     ////GETTER////
     isFinish() {
-        for (let i in this.state.exam) {
-            if (this.state.answer[i] === undefined || (this.state.exam[i].type === 'match' && this.state.answer[i] && this.state.exam[i].choices.length > this.state.answer[i].multiChoice.length)) {
-                return false
+        if (this.state.questionType === 'vote') {
+            console.log(this.state.exam, this.state.votedResult)
+            for (let i in this.state.exam) {
+                console.log(i, this.state.votedResult[this.state.exam[i].qid])
+                if (!this.state.votedResult[this.state.exam[i].qid]) {
+                    return false
+                }
             }
+            return true
         }
-        return true
+        else {
+            for (let i in this.state.exam) {
+                if (this.state.answer[i] === undefined
+                    || (this.state.exam[i].type === 'match' && this.state.answer[i] && this.state.exam[i].choices.length > this.state.answer[i].multiChoice.length)
+                ) {
+                    return false
+                }
+            }
+            return true
+        }
     }
 
     isAvailable(start, end) {
@@ -703,21 +771,30 @@ class Test extends Component {
 
     getBarValue(a, data_) {
         // console.log('1082',a, data)
+        // let data = JSON.parse(JSON.stringify(data_))
+        // // if(this.state.votedId){
+        // //     data.find(d => {return d._id === this.state.votedId}).amount += 1
+        // // }
+        // let max = Math.max.apply(Math, data.map(function (o) { return o.amount; }))
+        // return a / max * 100
+
         let data = JSON.parse(JSON.stringify(data_))
-        // if(this.state.votedId){
-        //     data.find(d => {return d._id === this.state.votedId}).amount += 1
-        // }
-        let max = Math.max.apply(Math, data.map(function (o) { return o.amount; }))
-        return a / max * 100
+        let userPicked = data.votes.find(d => { return d.choice === a.cid })
+        let max = Math.max.apply(Math, data.votes.map(function (o) { return o.counts; }))
+        return userPicked.counts / max * 100
+    }
+
+    getCountsValue(a, data_) {
+        let data = JSON.parse(JSON.stringify(data_))
+        let userPicked = data.votes.find(d => { return d.choice === a.cid })
+        return userPicked.counts
     }
 
     getPercentValue(a, data_) {
         let data = JSON.parse(JSON.stringify(data_))
-        // if(this.state.votedId){
-        //     data.find(d => {return d._id === this.state.votedId}).amount += 1
-        // }
-        let sum = data.reduce((a, b) => +a + +b.amount, 0);
-        return a / sum * 100
+        let userPicked = data.votes.find(d => { return d.choice === a.cid })
+        let sum = data.votes.reduce((a, b) => +a + +b.counts, 0);
+        return (userPicked.counts / sum * 100).toFixed(2)
     }
 
     getAnswerData() {
@@ -752,6 +829,10 @@ class Test extends Component {
                 </Button>
             )
         }
+    }
+
+    isVoted(index) {
+        return Boolean(this.state.votedResult[this.state.exam[index].qid])
     }
     ////GETTER////
 
@@ -907,8 +988,22 @@ class Test extends Component {
                                         else if (this.state.questionType === 'video') {
                                             diagramBtn = { width: '20px', height: '20px', border: this.state.latestVideoIndex === index ? '2px solid #337ab7' : '2px solid transparent', backgroundColor: this.state.answer[index] !== undefined ? '#44b29c' : '#d9d5d5', marginTop: 2, marginLeft: 2, padding: 0 }
                                         }
+                                        else if (this.state.questionType === 'vote') {
+                                            diagramBtn = { width: '20px', height: '20px', border: this.state.current === index ? '2px solid #337ab7' : '2px solid transparent', backgroundColor: this.isVoted(index) ? '#44b29c' : '#d9d5d5', marginTop: 2, marginLeft: 2, padding: 0 }
+                                        }
                                         return (
-                                            <Button key={index} onClick={() => { this.state.questionType === 'normal' ? this.setState({ current: index }) : this.videoJumper(index) }} style={diagramBtn}>
+                                            <Button
+                                                key={index}
+                                                onClick={() => {
+                                                    this.state.questionType === 'normal' ?
+                                                        this.setState({ current: index })
+                                                        :
+                                                        this.state.questionType === 'vote' ?
+                                                            this.setState({ current: index, currentVote: null }, () => this.fetchVoteData(d))
+                                                            :
+                                                            this.videoJumper(index)
+                                                }}
+                                                style={diagramBtn}>
                                                 <p style={styles.diagramTxt}>{index + 1}</p>
                                             </Button>
                                         )
@@ -934,19 +1029,22 @@ class Test extends Component {
                         </div>
                     </div>
                     <div style={styles.quizBox1_4}>
-                        <Button onClick={() => window.history.go(-1)} style={styles.closeExamBtn}>
+                        <Button onClick={() => window.history.go(-1)} style={{ ...styles.closeExamBtn, width: this.state.questionType === 'vote' ? '100%' : '60px' }}>
                             <FontAwesomeIcon icon={faTimes} style={styles.closeExamBtnIco} />
                         </Button>
-                        {!this.isFinish() ?
-                            <Button onClick={() => this.setState({ modal: true })} style={styles.finishBtn1}>
-                                <span style={styles.finishBtnTxt1}>{word[window.language].submit}</span>
-                                <FontAwesomeIcon icon={faArrowAltCircleRight} style={styles.finishBtnIco1} />
-                            </Button>
+                        {this.state.questionType !== 'vote' ?
+                            !this.isFinish() ?
+                                <Button onClick={() => this.setState({ modal: true })} style={styles.finishBtn1}>
+                                    <span style={styles.finishBtnTxt1}>{word[window.language].submit}</span>
+                                    <FontAwesomeIcon icon={faArrowAltCircleRight} style={styles.finishBtnIco1} />
+                                </Button>
+                                :
+                                <Button onClick={() => this.setState({ modal: true })} style={styles.finishBtn2}>
+                                    <span style={styles.finishBtnTxt2}>{word[window.language].submit}</span>
+                                    <FontAwesomeIcon icon={faCaretRight} style={styles.finishBtnIco2} />
+                                </Button>
                             :
-                            <Button onClick={() => this.setState({ modal: true })} style={styles.finishBtn2}>
-                                <span style={styles.finishBtnTxt2}>{word[window.language].submit}</span>
-                                <FontAwesomeIcon icon={faCaretRight} style={styles.finishBtnIco2} />
-                            </Button>
+                            null
                         }
                     </div>
                 </div>
@@ -955,8 +1053,8 @@ class Test extends Component {
                     <div style={styles.examTopicContainer}>
                         <h1 style={styles.examTopicTxt}>{word[window.language].question} {this.state.questionType === 'video' ? this.state.latestVideoIndex + 1 : this.state.current + 1} {word[window.language].from} {this.state.exam.length}</h1>
                         <div style={styles.examRouter}>
-                            {(this.state.questionType === 'normal' && this.state.current > 0) || (this.state.questionType === 'video' && this.state.latestVideoIndex > 0) ?
-                                <Button onClick={() => { this.state.questionType === 'normal' ? this.setState({ current: this.state.current - 1 }) : this.videoJumper(this.state.latestVideoIndex - 1) }} style={styles.routerBtn}>
+                            {((this.state.questionType === 'normal' || this.state.questionType === 'vote') && this.state.current > 0) || (this.state.questionType === 'video' && this.state.latestVideoIndex > 0) ?
+                                <Button onClick={() => { this.state.questionType === 'video' ? this.videoJumper(this.state.latestVideoIndex - 1) : this.setState({ current: this.state.current - 1, currentVote: null }) }} style={styles.routerBtn}>
                                     <FontAwesomeIcon icon={faCaretLeft} style={styles.routerBtnIco} />
                                     <span style={styles.routerBtnTxt}>{word[window.language].back}</span>
                                 </Button>
@@ -966,8 +1064,8 @@ class Test extends Component {
                                     <span style={styles.routerBtnTxt}>{word[window.language].back}</span>
                                 </Button>
                             }
-                            {(this.state.questionType === 'normal' && this.state.current !== (this.state.exam.length - 1)) || (this.state.questionType === 'video' && this.state.latestVideoIndex !== (this.state.exam.length - 1)) ?
-                                <Button onClick={() => { this.state.questionType === 'normal' ? this.setState({ current: this.state.current + 1 }) : this.videoJumper(this.state.latestVideoIndex + 1) }} style={styles.routerBtn}>
+                            {((this.state.questionType === 'normal' || this.state.questionType === 'vote') && this.state.current !== (this.state.exam.length - 1)) || (this.state.questionType === 'video' && this.state.latestVideoIndex !== (this.state.exam.length - 1)) ?
+                                <Button onClick={() => { this.state.questionType === 'video' ? this.videoJumper(this.state.latestVideoIndex + 1) : this.setState({ current: this.state.current + 1, currentVote: null }) }} style={styles.routerBtn}>
                                     <span style={styles.routerBtnTxt}>{word[window.language].forward}</span>
                                     <FontAwesomeIcon icon={faCaretRight} style={styles.routerBtnIco} />
                                 </Button>
@@ -1218,11 +1316,11 @@ class Test extends Component {
                             null
                         }
 
-                        {false ?
+                        {this.state.questionType === 'vote' ?
                             //voting
                             <div style={styles.examContainerInner}>
                                 <span style={styles.question}>
-                                    {this.state.exam[this.state.current] && this.state.exam[this.state.current].text + ' (' + this.state.exam[this.state.current].point + ' ' + word[window.language].point + ')'}
+                                    {this.state.exam[this.state.current] && this.state.exam[this.state.current].text/* + ' (' + this.state.exam[this.state.current].point + ' ' + word[window.language].point + ')'*/}
                                 </span>
                                 <div >
                                     {(this.state.exam[this.state.current] && this.state.exam[this.state.current].media) &&
@@ -1231,22 +1329,27 @@ class Test extends Component {
                                 </div>
                                 <div style={{ ...styles.answerContainer, display: 'flex', flexDirection: 'column', marginLeft: '10px', marginRight: '10px', flex: 1 }}>
                                     <span style={{ textAlign: 'right', color: '#aaa' }}>{word[window.language].onlyPickOne}</span>
-                                    {votingData.map((item, index) => {
+                                    {this.state.exam[this.state.current].choices.map((item, index) => {
                                         return (
                                             <div key={index} style={styles.votingContainer}>
                                                 <Button
-                                                    outline={this.state.votedId && this.state.votedId === item._id ? false : true}
+                                                    //this.setState({ answer: { ...this.state.answer, [this.state.current]: { "qid": this.state.exam[this.state.current].qid, "cid": c.cid } } })
+                                                    outline={JSON.stringify(this.state.answer[this.state.current]) === JSON.stringify({ "qid": this.state.exam[this.state.current].qid, "cid": item.cid })
+                                                        || JSON.stringify(this.state.currentVote) === JSON.stringify({ "qid": this.state.exam[this.state.current].qid, "cid": item.cid })
+                                                        || (this.state.votedResult[this.state.exam[this.state.current].qid] && this.state.votedResult[this.state.exam[this.state.current].qid].cid === item.cid)
+                                                        ? false : true}
                                                     color={this.getDefaultColor(index)}
                                                     style={styles.votingBtn}
-                                                    onClick={() => this.setState({ votedId: item._id })}
-                                                    disabled={/*this.state.votedId && this.state.votedId !== item._id ? true : false*/this.state.isVoteSubmited}
+                                                    // onClick={() => this.setState({ answer: { ...this.state.answer, [this.state.current]: { "qid": this.state.exam[this.state.current].qid, "cid": item.cid } } })}
+                                                    onClick={() => this.setState({ currentVote: { "qid": this.state.exam[this.state.current].qid, "cid": item.cid } })}
+                                                    disabled={Boolean(this.state.votedResult[this.state.exam[this.state.current].qid])}
                                                 >
-                                                    {item.value}
+                                                    {item.text}
                                                 </Button>
-                                                {this.state.isVoteSubmited ?
+                                                {this.state.votedResult[this.state.exam[this.state.current].qid] ?
                                                     <Progress multi style={styles.votingProgress}>
-                                                        <Progress bar animated color={this.getDefaultColor(index)} value={this.getBarValue(item.amount, votingData)}>
-                                                            <span style={{ marginLeft: '10px' }}>{item.amount + ' (' + this.getPercentValue(item.amount, votingData).toFixed(2) + '%)'} </span>
+                                                        <Progress bar animated color={this.getDefaultColor(index)} value={this.getBarValue(item, this.state.votedResult[this.state.exam[this.state.current].qid])}>
+                                                            <span style={{ marginLeft: '10px' }}>{this.getCountsValue(item, this.state.votedResult[this.state.exam[this.state.current].qid]) + ' (' + this.getPercentValue(item, this.state.votedResult[this.state.exam[this.state.current].qid]) + " %)"}</span>
                                                         </Progress>
                                                     </Progress>
                                                     :
@@ -1262,8 +1365,17 @@ class Test extends Component {
                                 </div>
                                 <div style={{ height: 1, width: '100%', backgroundColor: '#ddd' }} />
                                 <div>
-                                    <Button onClick={() => this.setState({ isVoteSubmited: true })} color="primary" disabled={!this.state.votedId} block style={{ marginTop: 10, marginBottom: 10, justifyContent: 'center', alignItems: 'center', height: 60 }}>
-                                        <span style={{ ...styles.text, color: '#fff' }}>ส่งคำตอบ</span>
+                                    <Button
+                                        onClick={() => { this.state.votedResult[this.state.exam[this.state.current].qid] ? this.fetchVoteData(this.state.exam[this.state.current]) : this.sendVote() }}
+                                        color={this.state.votedResult[this.state.exam[this.state.current].qid] ? "warning" : "primary"}
+                                        disabled={(!Boolean(this.state.currentVote) && !Boolean(this.state.votedResult[this.state.exam[this.state.current].qid]))
+                                            || (this.state.isLoadingVote && Boolean(this.state.votedResult[this.state.exam[this.state.current].qid])
+                                                || this.state.isSendingVote
+                                            )}
+                                        block
+                                        style={{ marginTop: 10, marginBottom: 10, justifyContent: 'center', alignItems: 'center', height: 60 }}
+                                    >
+                                        <span style={{ ...styles.text, color: '#fff' }}>{this.state.votedResult[this.state.exam[this.state.current].qid] ? <FontAwesomeIcon icon={faRedoAlt} style={styles.sendingAnswerWarningIco} /> : word[window.language].sendAnswer}</span>
                                     </Button>
                                 </div>
                             </div>

@@ -74,13 +74,11 @@ class Login extends Component {
         })
             .then(res => res.json())
             .then(e => {
-                console.log(e)
                 if (e.code === '401') {
                     throw new CodeError(e.message, e.code);
                 }
                 else if (e._id) {
                     this.setState({ isLoading: false }, () => this.setState({ redirect: true }))
-                    console.log(e)
                 }
                 else {
                     this.setState({ isLoading: false })

@@ -68,6 +68,13 @@ let word = {
         err_requireInviteCode: 'กรุณากรอกข้อมูล Invite Code',
         err_invalidInviteCode: 'Invite Code ไม่ถูกต้อง',
         err_invalidActivatedCode: 'Activated Code ไม่ถูกต้อง หรือ หมดอายุ กรุณาตรวจสอบ อีเมล',
+
+        regErr_student: 'กรุณาเพิ่มข้อมูล รหัสนักเรียน/นักศึกษา ของท่าน',
+        regErr_password: 'กรุณาเพิ่มข้อมูล รหัสผ่าน ของท่าน',
+        regErr_name: 'กรุณาเพิ่มข้อมูล ชื่อ นามสกุล ของท่าน',
+        regErr_school: 'กรุณาเลือก โรงเรียน ของท่าน',
+        regErr_grade: 'กรุณาเลือก ระดับชั้น ของท่าน',
+        regErr_room: 'กรุณาเลือก ห้องเรียน ของท่าน'
     },
     en: {
         signUp: 'Sign Up',
@@ -94,6 +101,13 @@ let word = {
         err_requireInviteCode: 'Require invite code',
         err_invalidInviteCode: 'Invalid invite code',
         err_invalidActivatedCode: 'Invalid activated code or expired check your email',
+
+        regErr_student: 'Please fill in "Student ID"',
+        regErr_password: 'Please fill in "Password"',
+        regErr_name: 'Please fill in Name "Surname"',
+        regErr_school: 'Please fill in "School/University"',
+        regErr_grade: 'Please fill in "Grade"',
+        regErr_room: 'Please fill in "Room"'
     }
 }
 
@@ -112,7 +126,12 @@ export default class Login extends Component {
             inviteCode: '',
             name: '',
             registerComplete: false,
-            school: []
+            school: [],
+
+            pickedSchool: null,
+            pickedGrade: null,
+            pickedRoom: null
+
         }
     }
 
@@ -128,7 +147,6 @@ export default class Login extends Component {
                     s[i].value = s[i]['_id'];
                     delete s[i]._id;
                 }
-                console.log(s)
                 this.setState({ school: s })
             })
             .catch(err => {
@@ -138,35 +156,54 @@ export default class Login extends Component {
 
     SendEmail() {
         //"6XXACBQ4MB"
-        console.log(this.state.email, this.state.password, this.state.name, this.state.pickedSchool.value, this.state.pickedGrade.value, this.state.pickedRoom.value)
-
-        fetch('http://student.questionquick.com/user/signup/', {
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            method: 'POST',
-            body: JSON.stringify({
-                'number': this.state.email,
-                'password': this.state.password,
-                'name': this.state.name,
-                'school': this.state.pickedSchool.value,
-                'grade': this.state.pickedGrade.value,
-                'room': this.state.pickedRoom.value
+        if (!this.state.email) {
+            alert(word[window.language].regErr_student)
+        }
+        else if (!this.state.password) {
+            alert(word[window.language].regErr_password)
+        }
+        else if (!this.state.name) {
+            alert(word[window.language].regErr_name)
+        }
+        else if (!this.state.pickedSchool) {
+            alert(word[window.language].regErr_school)
+        }
+        else if (!this.state.pickedGrade) {
+            alert(word[window.language].regErr_grade)
+        }
+        else if (!this.state.pickedRoom) {
+            alert(word[window.language].regErr_room)
+        }
+        else {
+            console.log(this.state.email, this.state.password, this.state.name, this.state.pickedSchool.value, this.state.pickedGrade.value, this.state.pickedRoom.value)
+            fetch('http://student.questionquick.com/user/signup/', {
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                method: 'POST',
+                body: JSON.stringify({
+                    'number': this.state.email,
+                    'password': this.state.password,
+                    'name': this.state.name,
+                    'school': this.state.pickedSchool.value,
+                    'grade': this.state.pickedGrade.value,
+                    'room': this.state.pickedRoom.value
+                })
             })
-        })
-            .then(res => Promise.all([res, res.json()]))
-            .then(resp => {
-                let response = resp[0]
-                let e = resp[1]
-                if (!response.ok) {
-                    throw new CodeError(e.message, e.code);
-                }
-                else {
-                    this.setState({ registerComplete: true })
-                }
-            })
-            .catch(err => {
-                this.setState({ isLoading: false }, () => this.loginFailed(err.message))
-            })
+                .then(res => Promise.all([res, res.json()]))
+                .then(resp => {
+                    let response = resp[0]
+                    let e = resp[1]
+                    if (!response.ok) {
+                        throw new CodeError(e.message, e.code);
+                    }
+                    else {
+                        this.setState({ registerComplete: true })
+                    }
+                })
+                .catch(err => {
+                    this.setState({ isLoading: false }, () => this.loginFailed(err.message))
+                })
+        }
     }
 
     loginFailed(err) {

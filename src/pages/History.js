@@ -354,13 +354,18 @@ export default class Setting extends Component {
         return true
     }
 
-    isAllCheck(){
-        for(let i in this.state.pickedHistory.questions){
-            if(!this.state.pickedHistory.questions[i].answer || !this.state.pickedHistory.questions[i].answer.result){
+    isAllCheck() {
+        for (let i in this.state.pickedHistory.questions) {
+            if (!this.state.pickedHistory.questions[i].answer || !this.state.pickedHistory.questions[i].answer.result) {
                 return true
             }
         }
         return false
+    }
+
+    getDefaultColor(i) {
+        let color = ['primary', 'secondary', 'success', 'info', 'warning', 'danger']
+        return color[i % 6]
     }
     ///GETTER///
 
@@ -406,6 +411,11 @@ export default class Setting extends Component {
                         {this.state.questionType === 'video' ?
                             //video
                             this.examDetailViewQuestionVideo() : null
+                        }
+
+                        {this.state.questionType === 'vote' ?
+                            //vote
+                            this.examDetailViewQuestionVote() : null
                         }
 
                     </div>
@@ -664,7 +674,7 @@ export default class Setting extends Component {
                             answerData = correctAns.pair.find(p => { return p.pid === answerPid })
                         }
 
-                        let BtnClr = answerData ? answerData.correct === item.cid ? 'success' : "danger" : 'secondary'
+                        let BtnClr = answerData ? answerData.correct === item.cid ? 'success' : "danger" : 'danger'
                         return (
                             <div key={index} style={styles.answerMatchContainer}>
                                 <div style={styles.matchBtn}>
@@ -676,7 +686,7 @@ export default class Setting extends Component {
                                     {BtnClr === 'success' ?
                                         <FontAwesomeIcon icon={faCheckCircle} style={{ ...styles.answerIco, color: '#28a746' }} />
                                         :
-                                        BtnClr === 'danger' ?
+                                        BtnClr === 'danger' || !answerData ?
                                             <FontAwesomeIcon icon={faTimesCircle} style={{ ...styles.answerIco, color: '#dc3446' }} />
                                             :
                                             null
@@ -797,6 +807,64 @@ export default class Setting extends Component {
                         <span style={{ color: '#aaa' }}>{word[window.language].notHaveQuestionYet}</span>
                     </div>
                 }
+                {correctAns && correctAns.solution &&
+                    <div style={styles.solutionBox}>
+                        <h4 style={styles.solutionTopic}>{word[window.language].solutionTopic}</h4>
+                        <p style={styles.solutionTxt}>{correctAns.solution}</p>
+                    </div>
+                }
+            </div>
+        )
+    }
+
+    examDetailViewQuestionVote() {
+        let correctAns = this.state.pickedHistory.questions[this.getPickIndex()]
+        console.log("correctAns", correctAns, this.state.pickedHistory)
+        // let correctAns = this.state.pickedHistory.answers.find(ans => { return ans.qid === this.state.exam[this.state.current].qid })
+        return (
+            <div style={styles.examContainerInner}>
+                <span style={styles.question}>
+                    {this.state.exam[this.state.current] && this.state.exam[this.state.current].text}
+                </span>
+                {(this.state.exam[this.state.current] && this.state.exam[this.state.current].media) &&
+                    this.getMedia(this.state.exam[this.state.current].media, true)
+                }
+
+                <div style={{ ...styles.answerContainer, display: 'flex', flexDirection: 'column', marginLeft: '10px', marginRight: '10px', flex: 1 }}>
+                    {this.state.exam[this.state.current].choices.map((item, index) => {
+                        return (
+                            <div key={index} style={styles.votingContainer}>
+                                <Button
+                                    // outline={JSON.stringify(this.state.answer[this.state.current]) === JSON.stringify({ "qid": this.state.exam[this.state.current].qid, "cid": item.cid })
+                                    //     || JSON.stringify(this.state.currentVote) === JSON.stringify({ "qid": this.state.exam[this.state.current].qid, "cid": item.cid })
+                                    //     || (this.state.votedResult[this.state.exam[this.state.current].qid] && this.state.votedResult[this.state.exam[this.state.current].qid].cid === item.cid)
+                                    //     ? false : true}
+                                    color={this.getDefaultColor(index)}
+                                    style={styles.votingBtn}
+                                    onClick={() => null}
+                                    disabled={true}
+                                >
+                                    {item.text}
+                                </Button>
+                                <Progress multi style={styles.votingProgress}>
+                                    <Progress bar animated color={this.getDefaultColor(index)} value={50}/*value={this.getBarValue(item, this.state.votedResult[this.state.exam[this.state.current].qid])}*/>
+                                        {/* <span style={{ marginLeft: '10px' }}>{this.getCountsValue(item, this.state.votedResult[this.state.exam[this.state.current].qid]) + ' (' + this.getPercentValue(item, this.state.votedResult[this.state.exam[this.state.current].qid]) + " %)"}</span> */}
+                                        <span style={{ marginLeft: '10px' }}>{50 + ' (' + 50 + " %)"}</span>
+                                    </Progress>
+                                </Progress>
+                            </div>
+                        )
+                    })}
+                </div>
+                <div style={{ height: 1, width: '100%', backgroundColor: '#ddd' }} />
+
+                {/* <div style={styles.answerContainer}>
+                    <div className={'textBoxContainer'} style={styles.answerTextInputBox}>
+                        <p className={'textBox'}>
+                            {correctAns && correctAns.answer && correctAns.answer.text}
+                        </p>
+                    </div>
+                </div> */}
                 {correctAns && correctAns.solution &&
                     <div style={styles.solutionBox}>
                         <h4 style={styles.solutionTopic}>{word[window.language].solutionTopic}</h4>
@@ -978,5 +1046,9 @@ const styles = {
     solutionBox: { width: '90%', border: '2px solid #239822', borderRadius: 20, margin: 'auto', paddingLeft: 10, paddingRight: 10, paddingTop: 5 },
     solutionTopic: { color: '#49c348', textAlign: 'left', fontFamily: 'DBH', fontWeight: 'bold', fontSize: 30, textDecorationLine: 'underline' },
     solutionTxt: { textAlign: 'left', fontFamily: 'DBH', fontWeight: 500, fontSize: 25, marginLeft: 10 },
-    answerIco: { fontSize: '30px', position: 'absolute', backgroundColor: '#fff', borderRadius: 30, padding: 2, display: 'flex' }
+    answerIco: { fontSize: '30px', position: 'absolute', backgroundColor: '#fff', borderRadius: 30, padding: 2, display: 'flex' },
+
+    votingContainer: { display: 'flex', flexDirection: 'row', alignItems: 'center', marginBottom: '5px' },
+    votingBtn: { width: '200px', marginRight: '5px', height: '50px' },
+    votingProgress: { width: '100%', height: '50px' },
 }
