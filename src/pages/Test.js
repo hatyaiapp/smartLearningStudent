@@ -765,7 +765,7 @@ class Test extends Component {
     }
 
     getDefaultColor(i) {
-        let color = ['primary', 'secondary', 'success', 'info', 'warning', 'danger']
+        let color = ['primary', 'danger', 'success', 'warning', 'info', 'secondary']
         return color[i % 6]
     }
 

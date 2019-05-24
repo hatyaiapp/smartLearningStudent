@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import '../App.css';
 import { Button, Modal, ModalHeader, ModalBody, ModalFooter, UncontrolledCollapse, Spinner, CustomInput, Collapse, Toast, ToastHeader, ToastBody, Input, Dropdown, DropdownToggle, DropdownMenu, DropdownItem, Progress, Alert } from 'reactstrap';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faUser, faClock, faFileAlt, faCalendarAlt, faCaretRight, faCaretLeft, faInfoCircle, faArrowsAltH, faChevronCircleLeft, faStarHalfAlt, faCheckCircle, faTimesCircle } from "@fortawesome/free-solid-svg-icons";
+import { faUser, faClock, faFileAlt, faCalendarAlt, faCaretRight, faCaretLeft, faInfoCircle, faArrowsAltH, faChevronCircleLeft, faStarHalfAlt, faCheckCircle, faTimesCircle, faRedoAlt } from "@fortawesome/free-solid-svg-icons";
 import '@trendmicro/react-sidenav/dist/react-sidenav.css';
 import SideNav from '../_component/sideNav'
 import { Player } from 'video-react';
@@ -79,6 +79,7 @@ export default class Setting extends Component {
             latestVideoIndex: -1,
             isFoundVideoRef: false,
             isLoading: true,
+            isLoadingVote: false,
 
             exam: []
         }
@@ -214,12 +215,19 @@ export default class Setting extends Component {
                             }, 1000);
                         }
 
-                        console.log(fullDesc)
+                        // console.log(fullDesc)
 
-                        this.setState({ exam, pickedHistory: fullDesc, questionType: quizevent.exam.type, quizevent: quizevent })
+                        this.setState({ exam, pickedHistory: fullDesc, questionType: quizevent.exam.type, quizevent: quizevent }, () => {
+                            if (this.state.isLoadingVote) {
+                                let _this = this
+                                setTimeout(() => {
+                                    _this.setState({ isLoadingVote: false })
+                                }, 2000);
+                            }
+                        })
                     })
                     .catch(e => {
-                        this.setState({ isFetchingExam: false })
+                        this.setState({ isFetchingExam: false, isLoadingVote: false })
                     })
             })
     }
@@ -251,7 +259,10 @@ export default class Setting extends Component {
 
     getDiagramBG(d) {
         let data = this.state.pickedHistory.questions.find(a => { return a.qid === d.qid })
-        if (!data || !data.answer) {
+        if (this.state.questionType === 'vote') {
+            return '#d9d5d5'
+        }
+        else if (!data || !data.answer) {
             return '#d9d5d5'
         }
         else if (data.answer && data.answer.result && data.answer.result.correct === true) {
@@ -328,7 +339,10 @@ export default class Setting extends Component {
             // data = this.state.pickedHistory.answers.find(a => { return this.state.exam[this.state.latestVideoIndex] && a.qid === this.state.exam[this.state.latestVideoIndex].qid })
             data = this.state.pickedHistory.questions[this.getPickIndex()].answer
         }
-        if (this.state.questionType === 'video' && this.state.latestVideoIndex < 0) {
+        if (this.state.questionType === 'vote') {
+            return null
+        }
+        else if (this.state.questionType === 'video' && this.state.latestVideoIndex < 0) {
             return null
         }
         else if (!data) {
@@ -364,8 +378,28 @@ export default class Setting extends Component {
     }
 
     getDefaultColor(i) {
-        let color = ['primary', 'secondary', 'success', 'info', 'warning', 'danger']
+        let color = ['primary', 'danger', 'success', 'warning', 'info', 'secondary']
         return color[i % 6]
+    }
+
+    getBarValue(a, data_) {
+        let data = JSON.parse(JSON.stringify(data_))
+        let userPicked = data.find(d => { return d.cid === a.cid })
+        let max = Math.max.apply(Math, data.map(function (o) { return o.counts; }))
+        return userPicked.counts / max * 100
+    }
+
+    getCountsValue(a, data_) {
+        let data = JSON.parse(JSON.stringify(data_))
+        let userPicked = data.find(d => { return d.cid === a.cid })
+        return userPicked.counts
+    }
+
+    getPercentValue(a, data_) {
+        let data = JSON.parse(JSON.stringify(data_))
+        let userPicked = data.find(d => { return d.cid === a.cid })
+        let sum = data.reduce((a, b) => +a + +b.counts, 0);
+        return (userPicked.counts / sum * 100).toFixed(2)
     }
     ///GETTER///
 
@@ -437,10 +471,12 @@ export default class Setting extends Component {
                         <FontAwesomeIcon icon={faFileAlt} style={styles.quizBox1_1DetailIco} />
                         <span style={styles.quizBox1_1DetailTxt}>: {this.state.pickedHistory && this.state.pickedHistory.exam.title}</span>
                     </div>
-                    <div style={styles.quizBox1_1DetailBox}>
-                        <FontAwesomeIcon icon={faStarHalfAlt} style={styles.quizBox1_1DetailIco} />
-                        <span style={styles.quizBox1_1DetailTxt}>: {this.state.pickedHistory && this.state.pickedHistory.totalPoint}{this.isAllCheck() && '+'} {word[window.language].point}</span>
-                    </div>
+                    {this.state.questionType !== 'vote' &&
+                        <div style={styles.quizBox1_1DetailBox}>
+                            <FontAwesomeIcon icon={faStarHalfAlt} style={styles.quizBox1_1DetailIco} />
+                            <span style={styles.quizBox1_1DetailTxt}>: {this.state.pickedHistory && this.state.pickedHistory.totalPoint}{this.isAllCheck() && '+'} {word[window.language].point}</span>
+                        </div>
+                    }
                 </div>
             </div>
         )
@@ -460,7 +496,7 @@ export default class Setting extends Component {
                             {this.state.exam.map((d, index) => {
                                 let diagramBtn = { width: '20px', height: '20px', backgroundColor: this.getDiagramBG(d), marginTop: 2, marginLeft: 2, padding: 0 }
                                 //border: this.state.current === index ? '2px solid #337ab7' : '2px solid transparent',
-                                if (this.state.questionType === 'normal' && this.state.current === index) {
+                                if ((this.state.questionType === 'normal' || this.state.questionType === 'vote') && this.state.current === index) {
                                     diagramBtn.border = '2px solid #337ab7'
                                 }
                                 else if (this.state.questionType === 'video' && this.state.latestVideoIndex === index) {
@@ -474,10 +510,10 @@ export default class Setting extends Component {
                                     <Button
                                         key={index}
                                         onClick={() => {
-                                            this.state.questionType === 'normal' ?
-                                                this.setState({ current: index })
-                                                :
+                                            this.state.questionType === 'video' ?
                                                 this.videoJumper(index)
+                                                :
+                                                this.setState({ current: index })
                                         }}
                                         style={diagramBtn}
                                     >
@@ -521,8 +557,8 @@ export default class Setting extends Component {
             <div style={styles.examTopicContainer}>
                 <h1 style={styles.examTopicTxt}>{word[window.language].question} {this.state.questionType === 'video' ? this.state.latestVideoIndex + 1 : this.state.current + 1} {word[window.language].from} {this.state.exam.length} {this.getResultStatus()}</h1>
                 <div style={styles.examRouter}>
-                    {(this.state.questionType === 'normal' && this.state.current > 0) || (this.state.questionType === 'video' && this.state.latestVideoIndex > 0) ?
-                        <Button onClick={() => { this.state.questionType === 'normal' ? this.setState({ current: this.state.current - 1 }) : this.videoJumper(this.state.latestVideoIndex - 1) }} style={styles.routerBtn}>
+                    {((this.state.questionType === 'normal' || this.state.questionType === 'vote') && this.state.current > 0) || (this.state.questionType === 'video' && this.state.latestVideoIndex > 0) ?
+                        <Button onClick={() => { (this.state.questionType === 'normal' || this.state.questionType === 'vote') ? this.setState({ current: this.state.current - 1 }) : this.videoJumper(this.state.latestVideoIndex - 1) }} style={styles.routerBtn}>
                             <FontAwesomeIcon icon={faCaretLeft} style={styles.routerBtnIco} />
                             <span style={styles.routerBtnTxt}>{word[window.language].back}</span>
                         </Button>
@@ -532,8 +568,8 @@ export default class Setting extends Component {
                             <span style={styles.routerBtnTxt}>{word[window.language].back}</span>
                         </Button>
                     }
-                    {(this.state.questionType === 'normal' && this.state.current !== (this.state.exam.length - 1)) || (this.state.questionType === 'video' && this.state.latestVideoIndex !== (this.state.exam.length - 1)) ?
-                        <Button onClick={() => { this.state.questionType === 'normal' ? this.setState({ current: this.state.current + 1 }) : this.videoJumper(this.state.latestVideoIndex + 1) }} style={styles.routerBtn}>
+                    {((this.state.questionType === 'normal' || this.state.questionType === 'vote') && this.state.current !== (this.state.exam.length - 1)) || (this.state.questionType === 'video' && this.state.latestVideoIndex !== (this.state.exam.length - 1)) ?
+                        <Button onClick={() => { (this.state.questionType === 'normal' || this.state.questionType === 'vote') ? this.setState({ current: this.state.current + 1 }) : this.videoJumper(this.state.latestVideoIndex + 1) }} style={styles.routerBtn}>
                             <span style={styles.routerBtnTxt}>{word[window.language].forward}</span>
                             <FontAwesomeIcon icon={faCaretRight} style={styles.routerBtnIco} />
                         </Button>
@@ -819,10 +855,8 @@ export default class Setting extends Component {
 
     examDetailViewQuestionVote() {
         let correctAns = this.state.pickedHistory.questions[this.getPickIndex()]
-        console.log("correctAns", correctAns, this.state.pickedHistory)
-        // let correctAns = this.state.pickedHistory.answers.find(ans => { return ans.qid === this.state.exam[this.state.current].qid })
         return (
-            <div style={styles.examContainerInner}>
+            <div style={{ ...styles.examContainerInner, display: 'flex', flex: 1 }}>
                 <span style={styles.question}>
                     {this.state.exam[this.state.current] && this.state.exam[this.state.current].text}
                 </span>
@@ -835,10 +869,7 @@ export default class Setting extends Component {
                         return (
                             <div key={index} style={styles.votingContainer}>
                                 <Button
-                                    // outline={JSON.stringify(this.state.answer[this.state.current]) === JSON.stringify({ "qid": this.state.exam[this.state.current].qid, "cid": item.cid })
-                                    //     || JSON.stringify(this.state.currentVote) === JSON.stringify({ "qid": this.state.exam[this.state.current].qid, "cid": item.cid })
-                                    //     || (this.state.votedResult[this.state.exam[this.state.current].qid] && this.state.votedResult[this.state.exam[this.state.current].qid].cid === item.cid)
-                                    //     ? false : true}
+                                    outline={this.state.pickedHistory.questions[this.state.current].answer && this.state.pickedHistory.questions[this.state.current].answer.cid === item.cid ? false : true}
                                     color={this.getDefaultColor(index)}
                                     style={styles.votingBtn}
                                     onClick={() => null}
@@ -847,9 +878,8 @@ export default class Setting extends Component {
                                     {item.text}
                                 </Button>
                                 <Progress multi style={styles.votingProgress}>
-                                    <Progress bar animated color={this.getDefaultColor(index)} value={50}/*value={this.getBarValue(item, this.state.votedResult[this.state.exam[this.state.current].qid])}*/>
-                                        {/* <span style={{ marginLeft: '10px' }}>{this.getCountsValue(item, this.state.votedResult[this.state.exam[this.state.current].qid]) + ' (' + this.getPercentValue(item, this.state.votedResult[this.state.exam[this.state.current].qid]) + " %)"}</span> */}
-                                        <span style={{ marginLeft: '10px' }}>{50 + ' (' + 50 + " %)"}</span>
+                                    <Progress bar animated color={this.getDefaultColor(index)} value={this.getBarValue(item, this.state.pickedHistory.questions[this.state.current].choices)}>
+                                        <span style={{ marginLeft: '10px' }}>{this.getCountsValue(item, this.state.pickedHistory.questions[this.state.current].choices) + ' (' + this.getPercentValue(item, this.state.pickedHistory.questions[this.state.current].choices) + " %)"}</span>
                                     </Progress>
                                 </Progress>
                             </div>
@@ -857,14 +887,17 @@ export default class Setting extends Component {
                     })}
                 </div>
                 <div style={{ height: 1, width: '100%', backgroundColor: '#ddd' }} />
-
-                {/* <div style={styles.answerContainer}>
-                    <div className={'textBoxContainer'} style={styles.answerTextInputBox}>
-                        <p className={'textBox'}>
-                            {correctAns && correctAns.answer && correctAns.answer.text}
-                        </p>
-                    </div>
-                </div> */}
+                <div>
+                    <Button
+                        onClick={() => this.setState({ isLoadingVote: true }, () => this.getExamDetail(this.state.pickedHistory))}
+                        color={"warning"}
+                        disabled={this.state.isLoadingVote}
+                        block
+                        style={{ marginTop: 10, marginBottom: 10, justifyContent: 'center', alignItems: 'center', height: 60 }}
+                    >
+                        <span style={{ ...styles.text, color: '#fff' }}>{<FontAwesomeIcon icon={faRedoAlt} style={styles.sendingAnswerWarningIco} />}</span>
+                    </Button>
+                </div>
                 {correctAns && correctAns.solution &&
                     <div style={styles.solutionBox}>
                         <h4 style={styles.solutionTopic}>{word[window.language].solutionTopic}</h4>
