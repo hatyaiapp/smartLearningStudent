@@ -136,7 +136,7 @@ export default class Setting extends Component {
             })
     }
 
-    ///ACTIVE///
+    //////////////////////////////ACTIVE//////////////////////////////
     videoJumper(i) {
         if (this.refs.player && this.state.exam[i]) {
             this.refs.player.seek(this.state.exam[i].second)
@@ -231,9 +231,9 @@ export default class Setting extends Component {
                     })
             })
     }
-    ///ACTIVE///
+    //////////////////////////////ACTIVE//////////////////////////////
 
-    ///GETTER///
+    //////////////////////////////GETTER//////////////////////////////
     getDurationTxt(duration) {
         var h = Math.floor(duration / 60);
         var m = duration % 60;
@@ -401,9 +401,9 @@ export default class Setting extends Component {
         let sum = data.reduce((a, b) => +a + +b.counts, 0);
         return (userPicked.counts / sum * 100).toFixed(2)
     }
-    ///GETTER///
+    //////////////////////////////GETTER//////////////////////////////
 
-    ///VIEWER///
+    //////////////////////////////VIEWER//////////////////////////////
     examDetailView() {
         return (
             <div style={styles.quizContainer}>
@@ -950,7 +950,7 @@ export default class Setting extends Component {
             </div>
         )
     }
-    ///VIEWER///
+    //////////////////////////////VIEWER//////////////////////////////
 
     render() {
         if (this.state.redirectHome) {
